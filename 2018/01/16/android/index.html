@@ -5,18 +5,18 @@
   
 
   
-  <title>android | 生死如风，常伴吾身</title>
+  <title>activity启动 | 生死如风，常伴吾身</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="个人小站">
+  <meta name="description" content="android.app.ActivitystartActivitystartActivity(intent);-&amp;gt;startActivity(intent,null);-&amp;gt;startActivityForResult(intent,-1);-&amp;gt;startActivityForResult(intent,-1,null); 查看startActivityForResultstart">
 <meta property="og:type" content="article">
-<meta property="og:title" content="android">
+<meta property="og:title" content="activity启动">
 <meta property="og:url" content="http://yoursite.com/2018/01/16/android/index.html">
 <meta property="og:site_name" content="生死如风，常伴吾身">
-<meta property="og:description" content="个人小站">
-<meta property="og:updated_time" content="2018-01-16T10:43:48.642Z">
+<meta property="og:description" content="android.app.ActivitystartActivitystartActivity(intent);-&amp;gt;startActivity(intent,null);-&amp;gt;startActivityForResult(intent,-1);-&amp;gt;startActivityForResult(intent,-1,null); 查看startActivityForResultstart">
+<meta property="og:updated_time" content="2018-01-17T08:44:19.302Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="android">
-<meta name="twitter:description" content="个人小站">
+<meta name="twitter:title" content="activity启动">
+<meta name="twitter:description" content="android.app.ActivitystartActivitystartActivity(intent);-&amp;gt;startActivity(intent,null);-&amp;gt;startActivityForResult(intent,-1);-&amp;gt;startActivityForResult(intent,-1,null); 查看startActivityForResultstart">
   
     <link rel="alternate" href="/atom.xml" title="生死如风，常伴吾身" type="application/atom+xml">
   
@@ -56,9 +56,9 @@
       </nav>
       <nav id="sub-nav">
         
-          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS"></a>
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
         
-        <a id="nav-search-btn" class="nav-icon" title="Buscar"></a>
+        <a id="nav-search-btn" class="nav-icon" title="Suche"></a>
       </nav>
       <div id="search-form-wrap">
         <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://yoursite.com"></form>
@@ -81,7 +81,7 @@
         
   
     <h1 class="article-title" itemprop="name">
-      android
+      activity启动
     </h1>
   
 
@@ -89,11 +89,19 @@
     
     <div class="article-entry" itemprop="articleBody">
       
-        
+        <h2 id="android-app-Activity"><a href="#android-app-Activity" class="headerlink" title="android.app.Activity"></a>android.app.Activity</h2><h3 id="startActivity"><a href="#startActivity" class="headerlink" title="startActivity"></a>startActivity</h3><p>startActivity(intent);-&gt;<br>startActivity(intent,null);-&gt;<br>startActivityForResult(intent,-1);-&gt;<br>startActivityForResult(intent,-1,null);</p>
+<h4 id="查看startActivityForResult"><a href="#查看startActivityForResult" class="headerlink" title="查看startActivityForResult"></a>查看startActivityForResult</h4><p>startActivityForResult(@RequiresPermission Intent intent,<br>                       int requestCode,@Nullable Bundle options){</p>
+<p>//1.如果option为null，给一个默认的options<br>//2.传递上下文对象、当前的主线程、IBinder标识、当前的Activity对象、intent、requestCode、options<br>Instrumentation.ActivityResult ar =<br>mInstrumentation.execStartActivity(<br>             this, mMainThread.getApplicationThread(), mToken, this,<br>             intent, requestCode, options);<br>                       }</p>
+<h4 id="android-app-Instrumentation-java-gt-execStartActivity"><a href="#android-app-Instrumentation-java-gt-execStartActivity" class="headerlink" title="android.app.Instrumentation.java-&gt;execStartActivity()"></a>android.app.Instrumentation.java-&gt;execStartActivity()</h4><h4 id="com-android-server-am-ActivityManagerService-java-gt-startActivity-gt-startActivityAsUser"><a href="#com-android-server-am-ActivityManagerService-java-gt-startActivity-gt-startActivityAsUser" class="headerlink" title="com.android.server.am.ActivityManagerService.java-&gt;startActivity()-&gt;startActivityAsUser()"></a>com.android.server.am.ActivityManagerService.java-&gt;startActivity()-&gt;startActivityAsUser()</h4><h4 id="com-android-server-am-ActivityStackSupervisor-java-gt-startActivityMayWait-gt-startActivityLocked-gt-startActivityUncheckedLocked"><a href="#com-android-server-am-ActivityStackSupervisor-java-gt-startActivityMayWait-gt-startActivityLocked-gt-startActivityUncheckedLocked" class="headerlink" title="com.android.server.am.ActivityStackSupervisor.java-&gt;startActivityMayWait()-&gt;startActivityLocked()-&gt;startActivityUncheckedLocked()"></a>com.android.server.am.ActivityStackSupervisor.java-&gt;startActivityMayWait()-&gt;startActivityLocked()-&gt;startActivityUncheckedLocked()</h4><h4 id="com-android-server-am-ActivityStack-java-gt-startActivityLocked"><a href="#com-android-server-am-ActivityStack-java-gt-startActivityLocked" class="headerlink" title="com.android.server.am.ActivityStack.java-&gt;startActivityLocked()"></a>com.android.server.am.ActivityStack.java-&gt;startActivityLocked()</h4><h4 id="com-android-server-am-ActivityStackSupervisor-java-gt-resumeTopActivitiesLocked"><a href="#com-android-server-am-ActivityStackSupervisor-java-gt-resumeTopActivitiesLocked" class="headerlink" title="com.android.server.am.ActivityStackSupervisor.java-&gt;resumeTopActivitiesLocked()"></a>com.android.server.am.ActivityStackSupervisor.java-&gt;resumeTopActivitiesLocked()</h4><h4 id="ActivityStack-resumeTopActivityLocked-gt-resumeTopActivityInnerLocked"><a href="#ActivityStack-resumeTopActivityLocked-gt-resumeTopActivityInnerLocked" class="headerlink" title="ActivityStack.resumeTopActivityLocked()-&gt;resumeTopActivityInnerLocked()"></a>ActivityStack.resumeTopActivityLocked()-&gt;resumeTopActivityInnerLocked()</h4><h4 id="com-android-server-am-ActivityStackSupervisor-java-gt-startSpecificActivityLocked"><a href="#com-android-server-am-ActivityStackSupervisor-java-gt-startSpecificActivityLocked" class="headerlink" title="com.android.server.am.ActivityStackSupervisor.java-&gt;startSpecificActivityLocked()"></a>com.android.server.am.ActivityStackSupervisor.java-&gt;startSpecificActivityLocked()</h4><h4 id="AMS-gt-startProcessLocked"><a href="#AMS-gt-startProcessLocked" class="headerlink" title="AMS-&gt;startProcessLocked();"></a>AMS-&gt;startProcessLocked();</h4><h4 id="android-os-Process-java-gt-start-gt-startViaZygote-gt-zygoteSendArgsAndGetResult"><a href="#android-os-Process-java-gt-start-gt-startViaZygote-gt-zygoteSendArgsAndGetResult" class="headerlink" title="android.os.Process.java-&gt;start()-&gt;startViaZygote()-&gt;zygoteSendArgsAndGetResult()"></a>android.os.Process.java-&gt;start()-&gt;startViaZygote()-&gt;zygoteSendArgsAndGetResult()</h4><h4 id="通过Zygote孵化了一个ActivityThread-去查看ActivityThread的main方法-转到ActivityThread-main"><a href="#通过Zygote孵化了一个ActivityThread-去查看ActivityThread的main方法-转到ActivityThread-main" class="headerlink" title="通过Zygote孵化了一个ActivityThread,去查看ActivityThread的main方法,转到ActivityThread-main"></a>通过Zygote孵化了一个ActivityThread,去查看ActivityThread的main方法,转到ActivityThread-main</h4><h4 id="android-app-ActivityThread-java-gt-main-gt-attach"><a href="#android-app-ActivityThread-java-gt-main-gt-attach" class="headerlink" title="android.app.ActivityThread.java-&gt;main()-&gt;attach()"></a>android.app.ActivityThread.java-&gt;main()-&gt;attach()</h4><h4 id="AMS-gt-attachApplication"><a href="#AMS-gt-attachApplication" class="headerlink" title="AMS-&gt;attachApplication()"></a>AMS-&gt;attachApplication()</h4><h4 id="ActivityStackSupervisor-gt-attachApplicationLocked-gt-realStartActivityLocked"><a href="#ActivityStackSupervisor-gt-attachApplicationLocked-gt-realStartActivityLocked" class="headerlink" title="ActivityStackSupervisor-&gt;attachApplicationLocked()-&gt;realStartActivityLocked()"></a>ActivityStackSupervisor-&gt;attachApplicationLocked()-&gt;realStartActivityLocked()</h4><h4 id="ActivityThread-gt-scheduleLaunchActivity-gt-handleLaunchActivity-gt-performLaunchActivity"><a href="#ActivityThread-gt-scheduleLaunchActivity-gt-handleLaunchActivity-gt-performLaunchActivity" class="headerlink" title="ActivityThread-&gt;scheduleLaunchActivity()-&gt;handleLaunchActivity()-&gt;performLaunchActivity()"></a>ActivityThread-&gt;scheduleLaunchActivity()-&gt;handleLaunchActivity()-&gt;performLaunchActivity()</h4><h4 id="Instrumentation-gt-callActivityOnCreate"><a href="#Instrumentation-gt-callActivityOnCreate" class="headerlink" title="Instrumentation-&gt;callActivityOnCreate()"></a>Instrumentation-&gt;callActivityOnCreate()</h4><h4 id="Activity-performCreate"><a href="#Activity-performCreate" class="headerlink" title="Activity-performCreate()"></a>Activity-performCreate()</h4><p>####com.android.server.am.ActivityStackSupervisor.java</p>
+<p>#####android.app.Instrumentation.java</p>
+<p>####com.android.server.am.ActivityManagerService.java</p>
+<p>####com.android.server.am.ActivityStack.java</p>
+<p>###android.app.ActivityThread.java-</p>
+
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2018/01/16/android/" data-id="cjchiksmp000074s6n90zysv2" class="article-share-link">Compartir</a>
+      <a data-url="http://yoursite.com/2018/01/16/android/" data-id="cjcits5y40001bys6ckd86dto" class="article-share-link">Teilen</a>
       
       
     </footer>
@@ -104,7 +112,7 @@
   
   
     <a href="/2017/12/27/hello-world/" id="article-nav-older" class="article-nav-link-wrap">
-      <strong class="article-nav-caption">Viejo</strong>
+      <strong class="article-nav-caption">Älter</strong>
       <div class="article-nav-title">Hello World</div>
     </a>
   
@@ -127,7 +135,7 @@
   
     
   <div class="widget-wrap">
-    <h3 class="widget-title">Archivos</h3>
+    <h3 class="widget-title">Archiv</h3>
     <div class="widget">
       <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/01/">January 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/12/">December 2017</a></li></ul>
     </div>
@@ -137,12 +145,12 @@
   
     
   <div class="widget-wrap">
-    <h3 class="widget-title">Posts recientes</h3>
+    <h3 class="widget-title">letzter Beitrag</h3>
     <div class="widget">
       <ul>
         
           <li>
-            <a href="/2018/01/16/android/">android</a>
+            <a href="/2018/01/16/android/">activity启动</a>
           </li>
         
           <li>
@@ -162,7 +170,7 @@
   <div class="outer">
     <div id="footer-info" class="inner">
       &copy; 2018 zhushuhao<br>
-      Construido por <a href="http://hexo.io/" target="_blank">Hexo</a>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
     </div>
   </div>
 </footer>
