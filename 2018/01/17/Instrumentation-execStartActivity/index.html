@@ -5,17 +5,19 @@
   
 
   
-  <title>Archiv | 生死如风，常伴吾身</title>
+  <title>Instrumentation.execStartActivity | 生死如风，常伴吾身</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="个人小站">
-<meta property="og:type" content="website">
-<meta property="og:title" content="生死如风，常伴吾身">
-<meta property="og:url" content="http://yoursite.com/archives/index.html">
+  <meta name="description" content="Instrumentation这个类，用来做测试。关于这个类，源码是这样介绍的： /**  * Base class for implementing application instrumentation code.  When running  * with instrumentation turned on, this class will be instantiated for you">
+<meta name="keywords" content="android ActivityManagerNative-getDefault">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Instrumentation.execStartActivity">
+<meta property="og:url" content="http://yoursite.com/2018/01/17/Instrumentation-execStartActivity/index.html">
 <meta property="og:site_name" content="生死如风，常伴吾身">
-<meta property="og:description" content="个人小站">
+<meta property="og:description" content="Instrumentation这个类，用来做测试。关于这个类，源码是这样介绍的： /**  * Base class for implementing application instrumentation code.  When running  * with instrumentation turned on, this class will be instantiated for you">
+<meta property="og:updated_time" content="2018-01-18T03:17:42.283Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="生死如风，常伴吾身">
-<meta name="twitter:description" content="个人小站">
+<meta name="twitter:title" content="Instrumentation.execStartActivity">
+<meta name="twitter:description" content="Instrumentation这个类，用来做测试。关于这个类，源码是这样介绍的： /**  * Base class for implementing application instrumentation code.  When running  * with instrumentation turned on, this class will be instantiated for you">
   
     <link rel="alternate" href="/atom.xml" title="生死如风，常伴吾身" type="application/atom+xml">
   
@@ -62,216 +64,183 @@
   </div>
 </header>
       <div class="outer">
-        <section id="main">
-  
-  
-    
-    
-      
-      
-      <section class="archives-wrap">
-        <div class="archive-year-wrap">
-          <a href="/archives/2018" class="archive-year">2018</a>
-        </div>
-        <div class="archives">
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2018/01/18/ActivityThread-scheduleLaunchActivity/" class="archive-article-date">
-  <time datetime="2018-01-18T04:32:47.000Z" itemprop="datePublished">Jan 18</time>
+        <section id="main"><article id="post-Instrumentation-execStartActivity" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2018/01/17/Instrumentation-execStartActivity/" class="article-date">
+  <time datetime="2018-01-17T10:22:14.000Z" itemprop="datePublished">2018-01-17</time>
 </a>
-      
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
   
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2018/01/18/ActivityThread-scheduleLaunchActivity/">ActivityThread-scheduleLaunchActivity </a>
+    <h1 class="article-title" itemprop="name">
+      Instrumentation.execStartActivity
     </h1>
   
 
-    </header>
-  </div>
-</article>
-  
+      </header>
     
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2018/01/18/ActivityStackSupervisor-attachApplicationLocked/" class="archive-article-date">
-  <time datetime="2018-01-18T04:28:01.000Z" itemprop="datePublished">Jan 18</time>
-</a>
+    <div class="article-entry" itemprop="articleBody">
       
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2018/01/18/ActivityStackSupervisor-attachApplicationLocked/">ActivityStackSupervisor-attachApplicationLocked</a>
-    </h1>
-  
+        <p>Instrumentation这个类，用来做测试。关于这个类，源码是这样介绍的：</p>
+<pre><code>/**
+ * Base class for implementing application instrumentation code.  When running
+ * with instrumentation turned on, this class will be instantiated for you
+ * before any of the application code, allowing you to monitor all of the
+ * interaction the system has with the application.  An Instrumentation
+ * implementation is described to the system through an AndroidManifest.xml&apos;s
+ * &amp;lt;instrumentation&amp;gt; tag.
+ */
 
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2018/01/18/ActivityManagerService-attachApplication/" class="archive-article-date">
-  <time datetime="2018-01-18T04:19:02.000Z" itemprop="datePublished">Jan 18</time>
-</a>
+ 网上翻译意思大概是这样的：
+
+ 用于实现应用程序代码的基类。当使用仪器进行运行时，该类将在任何应用程序代码之前为您实例化，
+ 允许您监视系统与应用程序之间的所有交互。Instrumentation的实现类在AndroidManifest.xml通过
+ &lt;instrumentation&gt;进行声明。
+
+ 也就是说系统通过这个方法，给我们监控app的代码执行提供了一个入口。
+</code></pre><p>我们来看execStartActivity方法  </p>
+<pre><code>/**
+* Execute a startActivity call made by the application.  The default 
+* implementation takes care of updating any active {@link ActivityMonitor}
+* objects and dispatches this call to the system activity manager; you can
+* override this to watch for the application to start an activity, and 
+* modify what happens when it does. 
+
+执行由应用程序调用的startActivity方法。默认的实现负责更新任何活动对象，
+并将此调用发送给系统活动管理器；您可以覆盖此项以监视启动活动的应用程序，
+以及修改当它发生时会发生什么。
+
+*
+* &lt;p&gt;This method returns an {@link ActivityResult} object, which you can 
+* use when intercepting application calls to avoid performing the start 
+* activity action but still return the result the application is 
+* expecting.  To do this, override this method to catch the call to start 
+* activity so that it returns a new ActivityResult containing the results 
+* you would like the application to see, and don&apos;t call up to the super 
+* class.  Note that an application is only expecting a result if 
+* &lt;var&gt;requestCode&lt;/var&gt; is &amp;gt;= 0.
+*
+这个方法返回一个Activityresult对象.
+您可以在拦截应用程序调用时使用它，以避免执行启动活动操作，但仍然返回应用程序期望的结果。
+为此，重写此方法以捕捉start activity的调用，它返回一个新的Activityresult,
+含有结果你想看到的应用程序,而不调用父类。注意，应用只在requestCode&gt;0时需要一个结果.
+
+* &lt;p&gt;This method throws {@link android.content.ActivityNotFoundException}
+* if there was no Activity found to run the given Intent.
+*
+这个方法如果找不到指定的Activity会抛出android.content.ActivityNotFoundException异常
+
+* @param who The Context from which the activity is being started.
+* @param contextThread The main thread of the Context from which the activity
+*                      is being started.
+* @param token Internal token identifying to the system who is starting 
+*              the activity; may be null.
+* @param target Which activity is performing the start (and thus receiving 
+*               any result); may be null if this call is not being made
+*               from an activity.
+* @param intent The actual Intent to start.
+* @param requestCode Identifier for this request&apos;s result; less than zero 
+*                    if the caller is not expecting a result.
+* @param options Addition options.
+*
+* @return To force the return of a particular result, return an 
+*         ActivityResult object containing the desired data; otherwise
+*         return null.  The default implementation always returns null.
+*
+* @throws android.content.ActivityNotFoundException
+*
+* @see Activity#startActivity(Intent)
+* @see Activity#startActivityForResult(Intent, int)
+* @see Activity#startActivityFromChild
+*
+* {@hide}
+*/
+</code></pre><p>   看一下execStartActivity的代码</p>
+<pre><code>public ActivityResult execStartActivity(
+            Context who, IBinder contextThread, IBinder token, Activity target,
+            Intent intent, int requestCode, Bundle options) {
+        IApplicationThread whoThread = (IApplicationThread) contextThread;
+        Uri referrer = target != null ? target.onProvideReferrer() : null;
+        if (referrer != null) {
+            intent.putExtra(Intent.EXTRA_REFERRER, referrer);
+        }
+        if (mActivityMonitors != null) {
+            synchronized (mSync) {
+                final int N = mActivityMonitors.size();
+                for (int i=0; i&lt;N; i++) {
+                    final ActivityMonitor am = mActivityMonitors.get(i);
+                    if (am.match(who, null, intent)) {
+                        am.mHits++;
+                        if (am.isBlocking()) {
+                            return requestCode &gt;= 0 ? am.getResult() : null;
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+        try {
+            intent.migrateExtraStreamToClipData();
+            intent.prepareToLeaveProcess();
+            int result = ActivityManagerNative.getDefault()
+                .startActivity(whoThread, who.getBasePackageName(), intent,
+                        intent.resolveTypeIfNeeded(who.getContentResolver()),
+                        token, target != null ? target.mEmbeddedID : null,
+                        requestCode, 0, null, options);
+            checkStartActivityResult(result, intent);
+        } catch (RemoteException e) {
+            throw new RuntimeException(&quot;Failure from system&quot;, e);
+        }
+        return null;
+    }
+</code></pre><p>   看这里</p>
+<pre><code>int result = ActivityManagerNative.getDefault()
+               .startActivity(whoThread, who.getBasePackageName(), intent,
+                       intent.resolveTypeIfNeeded(who.getContentResolver()),
+                       token, target != null ? target.mEmbeddedID : null,
+                       requestCode, 0, null, options);
+这里ActivityManagerNative.getDefault()返回了ActivityManagerProxy对象，ActivityManagerProxy通过Binder通信
+最终会调用ActivityManagerService.java中的startActivity方法
+</code></pre><p>  转到ActivityManagerNative-getDefault</p>
+
       
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2018/01/18/ActivityManagerService-attachApplication/">ActivityManagerService-attachApplication</a>
-    </h1>
-  
-
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2018/01/18/ActivityThread-main/" class="archive-article-date">
-  <time datetime="2018-01-18T04:10:59.000Z" itemprop="datePublished">Jan 18</time>
-</a>
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2018/01/17/Instrumentation-execStartActivity/" data-id="cjck3quqx000mc5s6izyav8vi" class="article-share-link">Teilen</a>
       
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2018/01/18/ActivityThread-main/">ActivityThread-main</a>
-    </h1>
-  
-
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2018/01/18/Process-start/" class="archive-article-date">
-  <time datetime="2018-01-18T04:03:13.000Z" itemprop="datePublished">Jan 18</time>
-</a>
       
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2018/01/18/Process-start/">Process-start</a>
-    </h1>
-  
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/android-ActivityManagerNative-getDefault/">android ActivityManagerNative-getDefault</a></li></ul>
 
-    </header>
+    </footer>
   </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2018/01/18/ActivityManagerNative-getDefault/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Neuer</strong>
+      <div class="article-nav-title">
+        
+          ActivityManagerNative-getDefault
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2018/01/17/hello-world/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Älter</strong>
+      <div class="article-nav-title">Hello World</div>
+    </a>
+  
+</nav>
+
+  
 </article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2018/01/18/ActivityManagerService-startProcessLocked/" class="archive-article-date">
-  <time datetime="2018-01-18T03:57:19.000Z" itemprop="datePublished">Jan 18</time>
-</a>
-      
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2018/01/18/ActivityManagerService-startProcessLocked/">ActivityManagerService-startProcessLocked</a>
-    </h1>
-  
-
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2018/01/18/ActivityStackSupervisor-startSpecificActivityLocked/" class="archive-article-date">
-  <time datetime="2018-01-18T03:53:39.000Z" itemprop="datePublished">Jan 18</time>
-</a>
-      
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2018/01/18/ActivityStackSupervisor-startSpecificActivityLocked/">ActivityStackSupervisor-startSpecificActivityLocked</a>
-    </h1>
-  
-
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2018/01/18/ActivityStack-resumeTopActivityLocked/" class="archive-article-date">
-  <time datetime="2018-01-18T03:48:33.000Z" itemprop="datePublished">Jan 18</time>
-</a>
-      
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2018/01/18/ActivityStack-resumeTopActivityLocked/">ActivityStack-resumeTopActivityLocked</a>
-    </h1>
-  
-
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2018/01/18/ActivityStackSupervisor-resumeTopActivitiesLocked/" class="archive-article-date">
-  <time datetime="2018-01-18T03:44:56.000Z" itemprop="datePublished">Jan 18</time>
-</a>
-      
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2018/01/18/ActivityStackSupervisor-resumeTopActivitiesLocked/">ActivityStackSupervisor-resumeTopActivitiesLocked</a>
-    </h1>
-  
-
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2018/01/18/ActivityStack-startActivityLocked/" class="archive-article-date">
-  <time datetime="2018-01-18T03:35:02.000Z" itemprop="datePublished">Jan 18</time>
-</a>
-      
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2018/01/18/ActivityStack-startActivityLocked/">ActivityStack-startActivityLocked</a>
-    </h1>
-  
-
-    </header>
-  </div>
-</article>
-  
-  
-    </div></section>
-  
-
-
-  <nav id="page-nav">
-    
-    <span class="page-number current">1</span><a class="page-number" href="/archives/page/2/">2</a><a class="extend next" rel="next" href="/archives/page/2/">weiter &raquo;</a>
-  </nav>
 
 </section>
         

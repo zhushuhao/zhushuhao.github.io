@@ -64,10 +64,10 @@
       <div class="outer">
         <section id="main">
   
-    <article id="post-hello-world" class="article article-type-post" itemscope itemprop="blogPost">
+    <article id="post-ActivityThread-scheduleLaunchActivity" class="article article-type-post" itemscope itemprop="blogPost">
   <div class="article-meta">
-    <a href="/2018/01/17/hello-world/" class="article-date">
-  <time datetime="2018-01-17T09:04:43.723Z" itemprop="datePublished">2018-01-17</time>
+    <a href="/2018/01/18/ActivityThread-scheduleLaunchActivity/" class="article-date">
+  <time datetime="2018-01-18T04:32:47.000Z" itemprop="datePublished">2018-01-18</time>
 </a>
     
   </div>
@@ -78,7 +78,7 @@
         
   
     <h1 itemprop="name">
-      <a class="article-title" href="/2018/01/17/hello-world/">Hello World</a>
+      <a class="article-title" href="/2018/01/18/ActivityThread-scheduleLaunchActivity/">ActivityThread-scheduleLaunchActivity </a>
     </h1>
   
 
@@ -86,14 +86,54 @@
     
     <div class="article-entry" itemprop="articleBody">
       
-        <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo new <span class="string">"My New Post"</span></span><br></pre></td></tr></table></figure>
+        <p>查看scheduleLaunchActivity方法</p>
+<pre><code>// we use token to identify this activity without having to send the
+// activity itself back to the activity manager. (matters more with ipc)
+@Override
+public final void scheduleLaunchActivity(Intent intent, IBinder token, int ident,
+        ActivityInfo info, Configuration curConfig, Configuration overrideConfig,
+        CompatibilityInfo compatInfo, String referrer, IVoiceInteractor voiceInteractor,
+        int procState, Bundle state, PersistableBundle persistentState,
+        List&lt;ResultInfo&gt; pendingResults, List&lt;ReferrerIntent&gt; pendingNewIntents,
+        boolean notResumed, boolean isForward, ProfilerInfo profilerInfo) {
+
+    updateProcessState(procState, false);
+
+    ActivityClientRecord r = new ActivityClientRecord();
+
+    r.token = token;
+    r.ident = ident;
+    r.intent = intent;
+    r.referrer = referrer;
+    r.voiceInteractor = voiceInteractor;
+    r.activityInfo = info;
+    r.compatInfo = compatInfo;
+    r.state = state;
+    r.persistentState = persistentState;
+
+    r.pendingResults = pendingResults;
+    r.pendingIntents = pendingNewIntents;
+
+    r.startsNotResumed = notResumed;
+    r.isForward = isForward;
+
+    r.profilerInfo = profilerInfo;
+
+    r.overrideConfig = overrideConfig;
+    updatePendingConfiguration(curConfig);
+
+    sendMessage(H.LAUNCH_ACTIVITY, r);
+}
+</code></pre><p>   private class H extends Handler {}</p>
 
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2018/01/17/hello-world/" data-id="cjciwis3s0000kis6xll2h6lm" class="article-share-link">Teilen</a>
+      <a data-url="http://yoursite.com/2018/01/18/ActivityThread-scheduleLaunchActivity/" data-id="cjck3quqk000fc5s6tx0461qe" class="article-share-link">Teilen</a>
       
       
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/android-ActivityThread-scheduleLaunchActivity/">android ActivityThread-scheduleLaunchActivity</a></li></ul>
+
     </footer>
   </div>
   
@@ -101,10 +141,10 @@
 
 
   
-    <article id="post-activity启动" class="article article-type-post" itemscope itemprop="blogPost">
+    <article id="post-ActivityStackSupervisor-attachApplicationLocked" class="article article-type-post" itemscope itemprop="blogPost">
   <div class="article-meta">
-    <a href="/2018/01/16/activity启动/" class="article-date">
-  <time datetime="2018-01-16T10:43:48.000Z" itemprop="datePublished">2018-01-16</time>
+    <a href="/2018/01/18/ActivityStackSupervisor-attachApplicationLocked/" class="article-date">
+  <time datetime="2018-01-18T04:28:01.000Z" itemprop="datePublished">2018-01-18</time>
 </a>
     
   </div>
@@ -115,7 +155,7 @@
         
   
     <h1 itemprop="name">
-      <a class="article-title" href="/2018/01/16/activity启动/">activity启动</a>
+      <a class="article-title" href="/2018/01/18/ActivityStackSupervisor-attachApplicationLocked/">ActivityStackSupervisor-attachApplicationLocked</a>
     </h1>
   
 
@@ -123,53 +163,2223 @@
     
     <div class="article-entry" itemprop="articleBody">
       
-        <pre><code>startActivity(intent);
-startActivity(intent,null);
-startActivityForResult(intent,-1);
-startActivityForResult(intent,-1,null);
+        <p>查看attachApplicationLocked方法</p>
+<pre><code>boolean attachApplicationLocked(ProcessRecord app) throws RemoteException {
+        final String processName = app.processName;
+        boolean didSomething = false;
+        for (int displayNdx = mActivityDisplays.size() - 1; displayNdx &gt;= 0; --displayNdx) {
+            ArrayList&lt;ActivityStack&gt; stacks = mActivityDisplays.valueAt(displayNdx).mStacks;
+            for (int stackNdx = stacks.size() - 1; stackNdx &gt;= 0; --stackNdx) {
+                final ActivityStack stack = stacks.get(stackNdx);
+                if (!isFrontStack(stack)) {
+                    continue;
+                }
+                ActivityRecord hr = stack.topRunningActivityLocked(null);
+                if (hr != null) {
+                    if (hr.app == null &amp;&amp; app.uid == hr.info.applicationInfo.uid
+                            &amp;&amp; processName.equals(hr.processName)) {
+                        try {
+                            if (realStartActivityLocked(hr, app, true, true)) {
+                                didSomething = true;
+                            }
+                        } catch (RemoteException e) {
+                            Slog.w(TAG, &quot;Exception in new application when starting activity &quot;
+                                  + hr.intent.getComponent().flattenToShortString(), e);
+                            throw e;
+                        }
+                    }
+                }
+            }
+        }
+        if (!didSomething) {
+            ensureActivitiesVisibleLocked(null, 0);
+        }
+        return didSomething;
+   }
+</code></pre><p>转到realStartActivityLocked方法</p>
+<pre><code>inal boolean realStartActivityLocked(ActivityRecord r,
+            ProcessRecord app, boolean andResume, boolean checkConfig)
+            throws RemoteException {
 
-startActivityForResult()                                       
+        if (andResume) {
+            r.startFreezingScreenLocked(app, 0);
+            mWindowManager.setAppVisibility(r.appToken, true);
 
-android.app.Instrumentation.java-&gt;execStartActivity()
+            // schedule launch ticks to collect information about slow apps.
+            r.startLaunchTickingLocked();
+        }
 
-AMS&gt;startActivity()-&gt;startActivityAsUser()
+        // Have the window manager re-evaluate the orientation of
+        // the screen based on the new activity order.  Note that
+        // as a result of this, it can call back into the activity
+        // manager with a new orientation.  We don&apos;t care about that,
+        // because the activity is not currently running so we are
+        // just restarting it anyway.
+        if (checkConfig) {
+            Configuration config = mWindowManager.updateOrientationFromAppTokens(
+                    mService.mConfiguration,
+                    r.mayFreezeScreenLocked(app) ? r.appToken : null);
+            mService.updateConfigurationLocked(config, r, false, false);
+        }
 
-ActivityStackSupervisor.java-&gt;startActivityMayWait()-&gt;startActivityLocked()-&gt;startActivityUncheckedLocked()
+        r.app = app;
+        app.waitingToKill = null;
+        r.launchCount++;
+        r.lastLaunchTime = SystemClock.uptimeMillis();
 
-ActivityStack.java-&gt;startActivityLocked()
+        if (DEBUG_ALL) Slog.v(TAG, &quot;Launching: &quot; + r);
 
-ActivityStackSupervisor.java-&gt;resumeTopActivitiesLocked()
+        int idx = app.activities.indexOf(r);
+        if (idx &lt; 0) {
+            app.activities.add(r);
+        }
+        mService.updateLruProcessLocked(app, true, null);
+        mService.updateOomAdjLocked();
 
-ActivityStack.resumeTopActivityLocked()-&gt;resumeTopActivityInnerLocked()
+        final TaskRecord task = r.task;
+        if (task.mLockTaskAuth == LOCK_TASK_AUTH_LAUNCHABLE ||
+                task.mLockTaskAuth == LOCK_TASK_AUTH_LAUNCHABLE_PRIV) {
+            setLockTaskModeLocked(task, LOCK_TASK_MODE_LOCKED, &quot;mLockTaskAuth==LAUNCHABLE&quot;, false);
+        }
 
-com.android.server.am.ActivityStackSupervisor.java-&gt;startSpecificActivityLocked()
+        final ActivityStack stack = task.stack;
+        try {
+            if (app.thread == null) {
+                throw new RemoteException();
+            }
+            List&lt;ResultInfo&gt; results = null;
+            List&lt;ReferrerIntent&gt; newIntents = null;
+            if (andResume) {
+                results = r.results;
+                newIntents = r.newIntents;
+            }
+            if (DEBUG_SWITCH) Slog.v(TAG_SWITCH,
+                    &quot;Launching: &quot; + r + &quot; icicle=&quot; + r.icicle + &quot; with results=&quot; + results
+                    + &quot; newIntents=&quot; + newIntents + &quot; andResume=&quot; + andResume);
+            if (andResume) {
+                EventLog.writeEvent(EventLogTags.AM_RESTART_ACTIVITY,
+                        r.userId, System.identityHashCode(r),
+                        task.taskId, r.shortComponentName);
+            }
+            if (r.isHomeActivity() &amp;&amp; r.isNotResolverActivity()) {
+                // Home process is the root process of the task.
+                mService.mHomeProcess = task.mActivities.get(0).app;
+            }
+            mService.ensurePackageDexOpt(r.intent.getComponent().getPackageName());
+            r.sleeping = false;
+            r.forceNewConfig = false;
+            mService.showAskCompatModeDialogLocked(r);
+            r.compat = mService.compatibilityInfoForPackageLocked(r.info.applicationInfo);
+            ProfilerInfo profilerInfo = null;
+            if (mService.mProfileApp != null &amp;&amp; mService.mProfileApp.equals(app.processName)) {
+                if (mService.mProfileProc == null || mService.mProfileProc == app) {
+                    mService.mProfileProc = app;
+                    final String profileFile = mService.mProfileFile;
+                    if (profileFile != null) {
+                        ParcelFileDescriptor profileFd = mService.mProfileFd;
+                        if (profileFd != null) {
+                            try {
+                                profileFd = profileFd.dup();
+                            } catch (IOException e) {
+                                if (profileFd != null) {
+                                    try {
+                                        profileFd.close();
+                                    } catch (IOException o) {
+                                    }
+                                    profileFd = null;
+                                }
+                            }
+                        }
 
-AMS-&gt;startProcessLocked();
+                        profilerInfo = new ProfilerInfo(profileFile, profileFd,
+                                mService.mSamplingInterval, mService.mAutoStopProfiler);
+                    }
+                }
+            }
 
-android.os.Process.java-&gt;start()-&gt;startViaZygote()-&gt;zygoteSendArgsAndGetResult()
+            if (andResume) {
+                app.hasShownUi = true;
+                app.pendingUiClean = true;
+            }
+            app.forceProcessStateUpTo(mService.mTopProcessState);
+            app.thread.scheduleLaunchActivity(new Intent(r.intent), r.appToken,
+                    System.identityHashCode(r), r.info, new Configuration(mService.mConfiguration),
+                    new Configuration(stack.mOverrideConfig), r.compat, r.launchedFromPackage,
+                    task.voiceInteractor, app.repProcState, r.icicle, r.persistentState, results,
+                    newIntents, !andResume, mService.isNextTransitionForward(), profilerInfo);
 
-通过Zygote孵化了一个ActivityThread,去查看ActivityThread的main方法,转到ActivityThread-main
+            if ((app.info.privateFlags&amp;ApplicationInfo.PRIVATE_FLAG_CANT_SAVE_STATE) != 0) {
+                // This may be a heavy-weight process!  Note that the package
+                // manager will ensure that only activity can run in the main
+                // process of the .apk, which is the only thing that will be
+                // considered heavy-weight.
+                if (app.processName.equals(app.info.packageName)) {
+                    if (mService.mHeavyWeightProcess != null
+                            &amp;&amp; mService.mHeavyWeightProcess != app) {
+                        Slog.w(TAG, &quot;Starting new heavy weight process &quot; + app
+                                + &quot; when already running &quot;
+                                + mService.mHeavyWeightProcess);
+                    }
+                    mService.mHeavyWeightProcess = app;
+                    Message msg = mService.mHandler.obtainMessage(
+                            ActivityManagerService.POST_HEAVY_NOTIFICATION_MSG);
+                    msg.obj = r;
+                    mService.mHandler.sendMessage(msg);
+                }
+            }
 
-android.app.ActivityThread.java-&gt;main()-&gt;attach()
+        } catch (RemoteException e) {
+            if (r.launchFailed) {
+                // This is the second time we failed -- finish activity
+                // and give up.
+                Slog.e(TAG, &quot;Second failure launching &quot;
+                      + r.intent.getComponent().flattenToShortString()
+                      + &quot;, giving up&quot;, e);
+                mService.appDiedLocked(app);
+                stack.requestFinishActivityLocked(r.appToken, Activity.RESULT_CANCELED, null,
+                        &quot;2nd-crash&quot;, false);
+                return false;
+            }
 
-AMS-&gt;attachApplication()
+            // This is the first time we failed -- restart process and
+            // retry.
+            app.activities.remove(r);
+            throw e;
+        }
 
-ActivityStackSupervisor-&gt;attachApplicationLocked()-&gt;realStartActivityLocked()
+        r.launchFailed = false;
+        if (stack.updateLRUListLocked(r)) {
+            Slog.w(TAG, &quot;Activity &quot; + r
+                  + &quot; being launched, but already in LRU list&quot;);
+        }
 
-ActivityThread-&gt;scheduleLaunchActivity()-&gt;handleLaunchActivity()-&gt;performLaunchActivity()
+        if (andResume) {
+            // As part of the process of launching, ActivityThread also performs
+            // a resume.
+            stack.minimalResumeActivityLocked(r);
+        } else {
+            // This activity is not starting in the resumed state... which
+            // should look like we asked it to pause+stop (but remain visible),
+            // and it has done so and reported back the current icicle and
+            // other state.
+            if (DEBUG_STATES) Slog.v(TAG_STATES,
+                    &quot;Moving to STOPPED: &quot; + r + &quot; (starting in stopped state)&quot;);
+            r.state = STOPPED;
+            r.stopped = true;
+        }
 
-Instrumentation-&gt;callActivityOnCreate()
+        // Launch the new version setup screen if needed.  We do this -after-
+        // launching the initial activity (that is, home), so that it can have
+        // a chance to initialize itself while in the background, making the
+        // switch back to it faster and look better.
+        if (isFrontStack(stack)) {
+            mService.startSetupActivityLocked();
+        }
 
-Activity-performCreate()
-</code></pre><p>com.android.server.am.ActivityStackSupervisor.java<br>android.app.Instrumentation.java<br>com.android.server.am.ActivityManagerService.java<br>com.android.server.am.ActivityStack.java<br>android.app.ActivityThread.java</p>
+        // Update any services we are bound to that might care about whether
+        // their client may have activities.
+        mService.mServices.updateServiceConnectionActivitiesLocked(r.app);
+
+        return true;
+    }
+</code></pre><p>重点</p>
+<pre><code>app.thread.scheduleLaunchActivity(new Intent(r.intent), r.appToken,
+                           System.identityHashCode(r), r.info, new Configuration(mService.mConfiguration),
+                           new Configuration(stack.mOverrideConfig), r.compat, r.launchedFromPackage,
+                           task.voiceInteractor, app.repProcState, r.icicle, r.persistentState, results,
+                           newIntents, !andResume, mService.isNextTransitionForward(), profilerInfo);
+</code></pre><h3 id="转到-ActivityThread-scheduleLaunchActivity"><a href="#转到-ActivityThread-scheduleLaunchActivity" class="headerlink" title="转到 ActivityThread-scheduleLaunchActivity"></a>转到 ActivityThread-scheduleLaunchActivity</h3>
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2018/01/18/ActivityStackSupervisor-attachApplicationLocked/" data-id="cjck3quqe0009c5s6b92yb9k1" class="article-share-link">Teilen</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/android-ActivityStackSupervisor-attachApplicationLocked-ActivityThread-scheduleLaunchActivity/">android ActivityStackSupervisor-attachApplicationLocked ActivityThread-scheduleLaunchActivity</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+    <article id="post-ActivityManagerService-attachApplication" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2018/01/18/ActivityManagerService-attachApplication/" class="article-date">
+  <time datetime="2018-01-18T04:19:02.000Z" itemprop="datePublished">2018-01-18</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2018/01/18/ActivityManagerService-attachApplication/">ActivityManagerService-attachApplication</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>###源码位置com.android.server.am.ActivityManagerService.java</p>
+<p>查看attachApplication方法</p>
+<pre><code>@Override
+   public final void attachApplication(IApplicationThread thread) {
+       synchronized (this) {
+           int callingPid = Binder.getCallingPid();
+           final long origId = Binder.clearCallingIdentity();
+           attachApplicationLocked(thread, callingPid);
+           Binder.restoreCallingIdentity(origId);
+       }
+   }
+</code></pre><p>转到attachApplicationLocked方法</p>
+<pre><code>private final boolean attachApplicationLocked(IApplicationThread thread,
+            int pid) {
+
+        // Find the application record that is being attached...  either via
+        // the pid if we are running in multiple processes, or just pull the
+        // next app record if we are emulating process with anonymous threads.
+        ProcessRecord app;
+        if (pid != MY_PID &amp;&amp; pid &gt;= 0) {
+            synchronized (mPidsSelfLocked) {
+                app = mPidsSelfLocked.get(pid);
+            }
+        } else {
+            app = null;
+        }
+
+        if (app == null) {
+            Slog.w(TAG, &quot;No pending application record for pid &quot; + pid
+                    + &quot; (IApplicationThread &quot; + thread + &quot;); dropping process&quot;);
+            EventLog.writeEvent(EventLogTags.AM_DROP_PROCESS, pid);
+            if (pid &gt; 0 &amp;&amp; pid != MY_PID) {
+                Process.killProcessQuiet(pid);
+                //TODO: killProcessGroup(app.info.uid, pid);
+            } else {
+                try {
+                    thread.scheduleExit();
+                } catch (Exception e) {
+                    // Ignore exceptions.
+                }
+            }
+            return false;
+        }
+
+        // If this application record is still attached to a previous
+        // process, clean it up now.
+        if (app.thread != null) {
+            handleAppDiedLocked(app, true, true);
+        }
+
+        // Tell the process all about itself.
+
+        if (DEBUG_ALL) Slog.v(
+                TAG, &quot;Binding process pid &quot; + pid + &quot; to record &quot; + app);
+
+        final String processName = app.processName;
+        try {
+            AppDeathRecipient adr = new AppDeathRecipient(
+                    app, pid, thread);
+            thread.asBinder().linkToDeath(adr, 0);
+            app.deathRecipient = adr;
+        } catch (RemoteException e) {
+            app.resetPackageList(mProcessStats);
+            startProcessLocked(app, &quot;link fail&quot;, processName);
+            return false;
+        }
+
+        EventLog.writeEvent(EventLogTags.AM_PROC_BOUND, app.userId, app.pid, app.processName);
+
+        app.makeActive(thread, mProcessStats);
+        app.curAdj = app.setAdj = -100;
+        app.curSchedGroup = app.setSchedGroup = Process.THREAD_GROUP_DEFAULT;
+        app.forcingToForeground = null;
+        updateProcessForegroundLocked(app, false, false);
+        app.hasShownUi = false;
+        app.debugging = false;
+        app.cached = false;
+        app.killedByAm = false;
+
+        mHandler.removeMessages(PROC_START_TIMEOUT_MSG, app);
+
+        boolean normalMode = mProcessesReady || isAllowedWhileBooting(app.info);
+        List&lt;ProviderInfo&gt; providers = normalMode ? generateApplicationProvidersLocked(app) : null;
+
+        if (!normalMode) {
+            Slog.i(TAG, &quot;Launching preboot mode app: &quot; + app);
+        }
+
+        if (DEBUG_ALL) Slog.v(
+            TAG, &quot;New app record &quot; + app
+            + &quot; thread=&quot; + thread.asBinder() + &quot; pid=&quot; + pid);
+        try {
+            int testMode = IApplicationThread.DEBUG_OFF;
+            if (mDebugApp != null &amp;&amp; mDebugApp.equals(processName)) {
+                testMode = mWaitForDebugger
+                    ? IApplicationThread.DEBUG_WAIT
+                    : IApplicationThread.DEBUG_ON;
+                app.debugging = true;
+                if (mDebugTransient) {
+                    mDebugApp = mOrigDebugApp;
+                    mWaitForDebugger = mOrigWaitForDebugger;
+                }
+            }
+            String profileFile = app.instrumentationProfileFile;
+            ParcelFileDescriptor profileFd = null;
+            int samplingInterval = 0;
+            boolean profileAutoStop = false;
+            if (mProfileApp != null &amp;&amp; mProfileApp.equals(processName)) {
+                mProfileProc = app;
+                profileFile = mProfileFile;
+                profileFd = mProfileFd;
+                samplingInterval = mSamplingInterval;
+                profileAutoStop = mAutoStopProfiler;
+            }
+            boolean enableOpenGlTrace = false;
+            if (mOpenGlTraceApp != null &amp;&amp; mOpenGlTraceApp.equals(processName)) {
+                enableOpenGlTrace = true;
+                mOpenGlTraceApp = null;
+            }
+
+            // If the app is being launched for restore or full backup, set it up specially
+            boolean isRestrictedBackupMode = false;
+            if (mBackupTarget != null &amp;&amp; mBackupAppName.equals(processName)) {
+                isRestrictedBackupMode = (mBackupTarget.backupMode == BackupRecord.RESTORE)
+                        || (mBackupTarget.backupMode == BackupRecord.RESTORE_FULL)
+                        || (mBackupTarget.backupMode == BackupRecord.BACKUP_FULL);
+            }
+
+            ensurePackageDexOpt(app.instrumentationInfo != null
+                    ? app.instrumentationInfo.packageName
+                    : app.info.packageName);
+            if (app.instrumentationClass != null) {
+                ensurePackageDexOpt(app.instrumentationClass.getPackageName());
+            }
+            if (DEBUG_CONFIGURATION) Slog.v(TAG_CONFIGURATION, &quot;Binding proc &quot;
+                    + processName + &quot; with config &quot; + mConfiguration);
+            ApplicationInfo appInfo = app.instrumentationInfo != null
+                    ? app.instrumentationInfo : app.info;
+            app.compat = compatibilityInfoForPackageLocked(appInfo);
+            if (profileFd != null) {
+                profileFd = profileFd.dup();
+            }
+            ProfilerInfo profilerInfo = profileFile == null ? null
+                    : new ProfilerInfo(profileFile, profileFd, samplingInterval, profileAutoStop);
+            thread.bindApplication(processName, appInfo, providers, app.instrumentationClass,
+                    profilerInfo, app.instrumentationArguments, app.instrumentationWatcher,
+                    app.instrumentationUiAutomationConnection, testMode, enableOpenGlTrace,
+                    isRestrictedBackupMode || !normalMode, app.persistent,
+                    new Configuration(mConfiguration), app.compat,
+                    getCommonServicesLocked(app.isolated),
+                    mCoreSettingsObserver.getCoreSettingsLocked());
+            updateLruProcessLocked(app, false, null);
+            app.lastRequestedGc = app.lastLowMemory = SystemClock.uptimeMillis();
+        } catch (Exception e) {
+            // todo: Yikes!  What should we do?  For now we will try to
+            // start another process, but that could easily get us in
+            // an infinite loop of restarting processes...
+            Slog.wtf(TAG, &quot;Exception thrown during bind of &quot; + app, e);
+
+            app.resetPackageList(mProcessStats);
+            app.unlinkDeathRecipient();
+            startProcessLocked(app, &quot;bind fail&quot;, processName);
+            return false;
+        }
+
+        // Remove this record from the list of starting applications.
+        mPersistentStartingProcesses.remove(app);
+        if (DEBUG_PROCESSES &amp;&amp; mProcessesOnHold.contains(app)) Slog.v(TAG_PROCESSES,
+                &quot;Attach application locked removing on hold: &quot; + app);
+        mProcessesOnHold.remove(app);
+
+        boolean badApp = false;
+        boolean didSomething = false;
+
+        // See if the top visible activity is waiting to run in this process...
+        if (normalMode) {
+            try {
+                if (mStackSupervisor.attachApplicationLocked(app)) {
+                    didSomething = true;
+                }
+            } catch (Exception e) {
+                Slog.wtf(TAG, &quot;Exception thrown launching activities in &quot; + app, e);
+                badApp = true;
+            }
+        }
+
+        // Find any services that should be running in this process...
+        if (!badApp) {
+            try {
+                didSomething |= mServices.attachApplicationLocked(app, processName);
+            } catch (Exception e) {
+                Slog.wtf(TAG, &quot;Exception thrown starting services in &quot; + app, e);
+                badApp = true;
+            }
+        }
+
+        // Check if a next-broadcast receiver is in this process...
+        if (!badApp &amp;&amp; isPendingBroadcastProcessLocked(pid)) {
+            try {
+                didSomething |= sendPendingBroadcastsLocked(app);
+            } catch (Exception e) {
+                // If the app died trying to launch the receiver we declare it &apos;bad&apos;
+                Slog.wtf(TAG, &quot;Exception thrown dispatching broadcasts in &quot; + app, e);
+                badApp = true;
+            }
+        }
+
+        // Check whether the next backup agent is in this process...
+        if (!badApp &amp;&amp; mBackupTarget != null &amp;&amp; mBackupTarget.appInfo.uid == app.uid) {
+            if (DEBUG_BACKUP) Slog.v(TAG_BACKUP,
+                    &quot;New app is backup target, launching agent for &quot; + app);
+            ensurePackageDexOpt(mBackupTarget.appInfo.packageName);
+            try {
+                thread.scheduleCreateBackupAgent(mBackupTarget.appInfo,
+                        compatibilityInfoForPackageLocked(mBackupTarget.appInfo),
+                        mBackupTarget.backupMode);
+            } catch (Exception e) {
+                Slog.wtf(TAG, &quot;Exception thrown creating backup agent in &quot; + app, e);
+                badApp = true;
+            }
+        }
+
+        if (badApp) {
+            app.kill(&quot;error during init&quot;, true);
+            handleAppDiedLocked(app, false, true);
+            return false;
+        }
+
+        if (!didSomething) {
+            updateOomAdjLocked();
+        }
+
+        return true;
+    }
+</code></pre><p>重点</p>
+<pre><code>if (normalMode) {
+                  try {
+                      if (mStackSupervisor.attachApplicationLocked(app)) {
+                          didSomething = true;
+                      }
+                  } catch (Exception e) {
+                      Slog.wtf(TAG, &quot;Exception thrown launching activities in &quot; + app, e);
+                      badApp = true;
+                  }
+              }
+</code></pre><p>###转到ActivityStackSupervisor-attachApplicationLocked                           </p>
 
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2018/01/16/activity启动/" data-id="cjciwis470001kis62w18qge6" class="article-share-link">Teilen</a>
+      <a data-url="http://yoursite.com/2018/01/18/ActivityManagerService-attachApplication/" data-id="cjck3quq60003c5s6xi5dy77b" class="article-share-link">Teilen</a>
       
       
-  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/android/">android</a></li></ul>
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/android-ActivityManagerService-attachApplication-ActivityStackSupervisor-attachApplicationLocked/">android ActivityManagerService-attachApplication ActivityStackSupervisor-attachApplicationLocked</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+    <article id="post-ActivityThread-main" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2018/01/18/ActivityThread-main/" class="article-date">
+  <time datetime="2018-01-18T04:10:59.000Z" itemprop="datePublished">2018-01-18</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2018/01/18/ActivityThread-main/">ActivityThread-main</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>###源码位置android.app.ActivityThread</p>
+<pre><code>/**
+* This manages the execution of the main thread in an
+* application process, scheduling and executing activities,
+* broadcasts, and other operations on it as the activity
+* manager requests.
+*
+它按照 activity manager的要求管理应用程序进程中主线程的执行、调度和执行活动、广播以及其他活动
+* {@hide}
+*/
+public final class ActivityThread {}
+
+不继承，不实现
+</code></pre><p> 查看main方法</p>
+<pre><code>public static void main(String[] args) {
+        Trace.traceBegin(Trace.TRACE_TAG_ACTIVITY_MANAGER, &quot;ActivityThreadMain&quot;);
+        SamplingProfilerIntegration.start();
+
+        // CloseGuard defaults to true and can be quite spammy.  We
+        // disable it here, but selectively enable it later (via
+        // StrictMode) on debug builds, but using DropBox, not logs.
+        CloseGuard.setEnabled(false);
+
+        Environment.initForCurrentUser();
+
+        // Set the reporter for event logging in libcore
+        EventLogger.setReporter(new EventLoggingReporter());
+
+        AndroidKeyStoreProvider.install();
+
+        // Make sure TrustedCertificateStore looks in the right place for CA certificates
+        final File configDir = Environment.getUserConfigDirectory(UserHandle.myUserId());
+        TrustedCertificateStore.setDefaultUserDirectory(configDir);
+
+        Process.setArgV0(&quot;&lt;pre-initialized&gt;&quot;);
+
+        Looper.prepareMainLooper();
+
+        ActivityThread thread = new ActivityThread();
+        thread.attach(false);
+
+        if (sMainThreadHandler == null) {
+            sMainThreadHandler = thread.getHandler();
+        }
+
+        if (false) {
+            Looper.myLooper().setMessageLogging(new
+                    LogPrinter(Log.DEBUG, &quot;ActivityThread&quot;));
+        }
+
+        // End of event ActivityThreadMain.
+        Trace.traceEnd(Trace.TRACE_TAG_ACTIVITY_MANAGER);
+        Looper.loop();
+
+        throw new RuntimeException(&quot;Main thread loop unexpectedly exited&quot;);
+    }
+</code></pre><p>转到attach方法</p>
+<pre><code>private void attach(boolean system) {
+        sCurrentActivityThread = this;
+        mSystemThread = system;
+        if (!system) {
+            ViewRootImpl.addFirstDrawHandler(new Runnable() {
+                @Override
+                public void run() {
+                    ensureJitEnabled();
+                }
+            });
+            android.ddm.DdmHandleAppName.setAppName(&quot;&lt;pre-initialized&gt;&quot;,
+                                                    UserHandle.myUserId());
+            RuntimeInit.setApplicationObject(mAppThread.asBinder());
+            final IActivityManager mgr = ActivityManagerNative.getDefault();
+            try {
+                mgr.attachApplication(mAppThread);
+            } catch (RemoteException ex) {
+                // Ignore
+            }
+            // Watch for getting close to heap limit.
+            BinderInternal.addGcWatcher(new Runnable() {
+                @Override public void run() {
+                    if (!mSomeActivitiesChanged) {
+                        return;
+                    }
+                    Runtime runtime = Runtime.getRuntime();
+                    long dalvikMax = runtime.maxMemory();
+                    long dalvikUsed = runtime.totalMemory() - runtime.freeMemory();
+                    if (dalvikUsed &gt; ((3*dalvikMax)/4)) {
+                        if (DEBUG_MEMORY_TRIM) Slog.d(TAG, &quot;Dalvik max=&quot; + (dalvikMax/1024)
+                                + &quot; total=&quot; + (runtime.totalMemory()/1024)
+                                + &quot; used=&quot; + (dalvikUsed/1024));
+                        mSomeActivitiesChanged = false;
+                        try {
+                            mgr.releaseSomeActivities(mAppThread);
+                        } catch (RemoteException e) {
+                        }
+                    }
+                }
+            });
+        } else {
+            // Don&apos;t set application object here -- if the system crashes,
+            // we can&apos;t display an alert, we just want to die die die.
+            android.ddm.DdmHandleAppName.setAppName(&quot;system_process&quot;,
+                    UserHandle.myUserId());
+            try {
+                mInstrumentation = new Instrumentation();
+                ContextImpl context = ContextImpl.createAppContext(
+                        this, getSystemContext().mPackageInfo);
+                mInitialApplication = context.mPackageInfo.makeApplication(true, null);
+                mInitialApplication.onCreate();
+            } catch (Exception e) {
+                throw new RuntimeException(
+                        &quot;Unable to instantiate Application():&quot; + e.toString(), e);
+            }
+        }
+
+        // add dropbox logging to libcore
+        DropBox.setReporter(new DropBoxReporter());
+
+        ViewRootImpl.addConfigCallback(new ComponentCallbacks2() {
+            @Override
+            public void onConfigurationChanged(Configuration newConfig) {
+                synchronized (mResourcesManager) {
+                    // We need to apply this change to the resources
+                    // immediately, because upon returning the view
+                    // hierarchy will be informed about it.
+                    if (mResourcesManager.applyConfigurationToResourcesLocked(newConfig, null)) {
+                        // This actually changed the resources!  Tell
+                        // everyone about it.
+                        if (mPendingConfiguration == null ||
+                                mPendingConfiguration.isOtherSeqNewer(newConfig)) {
+                            mPendingConfiguration = newConfig;
+
+                            sendMessage(H.CONFIGURATION_CHANGED, newConfig);
+                        }
+                    }
+                }
+            }
+            @Override
+            public void onLowMemory() {
+            }
+            @Override
+            public void onTrimMemory(int level) {
+            }
+        });
+    }
+</code></pre><p>重点</p>
+<pre><code>final IActivityManager mgr = ActivityManagerNative.getDefault();
+              try {
+                  mgr.attachApplication(mAppThread);
+              } catch (RemoteException ex) {
+                  // Ignore
+              }
+ 获取到ActivityManagerProxy,执行attachApplication，
+ 最终ActivityManagerService执行attachApplication
+</code></pre><p>###转到ActivityManagerService-attachApplication</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2018/01/18/ActivityThread-main/" data-id="cjck3quqo000hc5s6xl3ev4p9" class="article-share-link">Teilen</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/android-ActivityThread-main-ActivityManagerService-attachApplication/">android ActivityThread-main ActivityManagerService-attachApplication</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+    <article id="post-Process-start" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2018/01/18/Process-start/" class="article-date">
+  <time datetime="2018-01-18T04:03:13.000Z" itemprop="datePublished">2018-01-18</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2018/01/18/Process-start/">Process-start</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>###源码位置android.os.Process</p>
+<pre><code>/**
+* Tools for managing OS processes.
+管理操作系统进程的工具
+*/
+public class Process {}
+不继承类，不实现接口
+</code></pre><p> 查看start方法</p>
+<pre><code>/**
+    * Start a new process.
+    * 
+    * &lt;p&gt;If processes are enabled, a new process is created and the
+    * static main() function of a &lt;var&gt;processClass&lt;/var&gt; is executed there.
+    * The process will continue running after this function returns.
+    * 
+    * &lt;p&gt;If processes are not enabled, a new thread in the caller&apos;s
+    * process is created and main() of &lt;var&gt;processClass&lt;/var&gt; called there.
+    * 
+    * &lt;p&gt;The niceName parameter, if not an empty string, is a custom name to
+    * give to the process instead of using processClass.  This allows you to
+    * make easily identifyable processes even if you are using the same base
+    * &lt;var&gt;processClass&lt;/var&gt; to start them.
+    * 
+    * @param processClass The class to use as the process&apos;s main entry
+    *                     point.
+    * @param niceName A more readable name to use for the process.
+    * @param uid The user-id under which the process will run.
+    * @param gid The group-id under which the process will run.
+    * @param gids Additional group-ids associated with the process.
+    * @param debugFlags Additional flags.
+    * @param targetSdkVersion The target SDK version for the app.
+    * @param seInfo null-ok SELinux information for the new process.
+    * @param abi non-null the ABI this app should be started with.
+    * @param instructionSet null-ok the instruction set to use.
+    * @param appDataDir null-ok the data directory of the app.
+    * @param zygoteArgs Additional arguments to supply to the zygote process.
+    * 
+    * @return An object that describes the result of the attempt to start the process.
+    * @throws RuntimeException on fatal start failure
+    * 
+    * {@hide}
+    */
+   public static final ProcessStartResult start(final String processClass,
+                                 final String niceName,
+                                 int uid, int gid, int[] gids,
+                                 int debugFlags, int mountExternal,
+                                 int targetSdkVersion,
+                                 String seInfo,
+                                 String abi,
+                                 String instructionSet,
+                                 String appDataDir,
+                                 String[] zygoteArgs) {
+       try {
+           return startViaZygote(processClass, niceName, uid, gid, gids,
+                   debugFlags, mountExternal, targetSdkVersion, seInfo,
+                   abi, instructionSet, appDataDir, zygoteArgs);
+       } catch (ZygoteStartFailedEx ex) {
+           Log.e(LOG_TAG,
+                   &quot;Starting VM process through Zygote failed&quot;);
+           throw new RuntimeException(
+                   &quot;Starting VM process through Zygote failed&quot;, ex);
+       }
+   }
+</code></pre><p>转到startViaZygote方法</p>
+<pre><code>/**
+     * Starts a new process via the zygote mechanism.
+     *
+     * @param processClass Class name whose static main() to run
+     * @param niceName &apos;nice&apos; process name to appear in ps
+     * @param uid a POSIX uid that the new process should setuid() to
+     * @param gid a POSIX gid that the new process shuold setgid() to
+     * @param gids null-ok; a list of supplementary group IDs that the
+     * new process should setgroup() to.
+     * @param debugFlags Additional flags.
+     * @param targetSdkVersion The target SDK version for the app.
+     * @param seInfo null-ok SELinux information for the new process.
+     * @param abi the ABI the process should use.
+     * @param instructionSet null-ok the instruction set to use.
+     * @param appDataDir null-ok the data directory of the app.
+     * @param extraArgs Additional arguments to supply to the zygote process.
+     * @return An object that describes the result of the attempt to start the process.
+     * @throws ZygoteStartFailedEx if process start failed for any reason
+     */
+    private static ProcessStartResult startViaZygote(final String processClass,
+                                  final String niceName,
+                                  final int uid, final int gid,
+                                  final int[] gids,
+                                  int debugFlags, int mountExternal,
+                                  int targetSdkVersion,
+                                  String seInfo,
+                                  String abi,
+                                  String instructionSet,
+                                  String appDataDir,
+                                  String[] extraArgs)
+                                  throws ZygoteStartFailedEx {
+        synchronized(Process.class) {
+            ArrayList&lt;String&gt; argsForZygote = new ArrayList&lt;String&gt;();
+
+            // --runtime-args, --setuid=, --setgid=,
+            // and --setgroups= must go first
+            argsForZygote.add(&quot;--runtime-args&quot;);
+            argsForZygote.add(&quot;--setuid=&quot; + uid);
+            argsForZygote.add(&quot;--setgid=&quot; + gid);
+            if ((debugFlags &amp; Zygote.DEBUG_ENABLE_JNI_LOGGING) != 0) {
+                argsForZygote.add(&quot;--enable-jni-logging&quot;);
+            }
+            if ((debugFlags &amp; Zygote.DEBUG_ENABLE_SAFEMODE) != 0) {
+                argsForZygote.add(&quot;--enable-safemode&quot;);
+            }
+            if ((debugFlags &amp; Zygote.DEBUG_ENABLE_DEBUGGER) != 0) {
+                argsForZygote.add(&quot;--enable-debugger&quot;);
+            }
+            if ((debugFlags &amp; Zygote.DEBUG_ENABLE_CHECKJNI) != 0) {
+                argsForZygote.add(&quot;--enable-checkjni&quot;);
+            }
+            if ((debugFlags &amp; Zygote.DEBUG_ENABLE_JIT) != 0) {
+                argsForZygote.add(&quot;--enable-jit&quot;);
+            }
+            if ((debugFlags &amp; Zygote.DEBUG_GENERATE_DEBUG_INFO) != 0) {
+                argsForZygote.add(&quot;--generate-debug-info&quot;);
+            }
+            if ((debugFlags &amp; Zygote.DEBUG_ENABLE_ASSERT) != 0) {
+                argsForZygote.add(&quot;--enable-assert&quot;);
+            }
+            if (mountExternal == Zygote.MOUNT_EXTERNAL_DEFAULT) {
+                argsForZygote.add(&quot;--mount-external-default&quot;);
+            } else if (mountExternal == Zygote.MOUNT_EXTERNAL_READ) {
+                argsForZygote.add(&quot;--mount-external-read&quot;);
+            } else if (mountExternal == Zygote.MOUNT_EXTERNAL_WRITE) {
+                argsForZygote.add(&quot;--mount-external-write&quot;);
+            }
+            argsForZygote.add(&quot;--target-sdk-version=&quot; + targetSdkVersion);
+
+            //TODO optionally enable debuger
+            //argsForZygote.add(&quot;--enable-debugger&quot;);
+
+            // --setgroups is a comma-separated list
+            if (gids != null &amp;&amp; gids.length &gt; 0) {
+                StringBuilder sb = new StringBuilder();
+                sb.append(&quot;--setgroups=&quot;);
+
+                int sz = gids.length;
+                for (int i = 0; i &lt; sz; i++) {
+                    if (i != 0) {
+                        sb.append(&apos;,&apos;);
+                    }
+                    sb.append(gids[i]);
+                }
+
+                argsForZygote.add(sb.toString());
+            }
+
+            if (niceName != null) {
+                argsForZygote.add(&quot;--nice-name=&quot; + niceName);
+            }
+
+            if (seInfo != null) {
+                argsForZygote.add(&quot;--seinfo=&quot; + seInfo);
+            }
+
+            if (instructionSet != null) {
+                argsForZygote.add(&quot;--instruction-set=&quot; + instructionSet);
+            }
+
+            if (appDataDir != null) {
+                argsForZygote.add(&quot;--app-data-dir=&quot; + appDataDir);
+            }
+
+            argsForZygote.add(processClass);
+
+            if (extraArgs != null) {
+                for (String arg : extraArgs) {
+                    argsForZygote.add(arg);
+                }
+            }
+
+            return zygoteSendArgsAndGetResult(openZygoteSocketIfNeeded(abi), argsForZygote);
+        }
+    }
+</code></pre><p>转到zygoteSendArgsAndGetResult</p>
+<pre><code>/**
+     * Sends an argument list to the zygote process, which starts a new child
+     * and returns the child&apos;s pid. Please note: the present implementation
+     * replaces newlines in the argument list with spaces.
+     *
+     * @throws ZygoteStartFailedEx if process start failed for any reason
+     */
+    private static ProcessStartResult zygoteSendArgsAndGetResult(
+            ZygoteState zygoteState, ArrayList&lt;String&gt; args)
+            throws ZygoteStartFailedEx {
+        try {
+            /**
+             * See com.android.internal.os.ZygoteInit.readArgumentList()
+             * Presently the wire format to the zygote process is:
+             * a) a count of arguments (argc, in essence)
+             * b) a number of newline-separated argument strings equal to count
+             *
+             * After the zygote process reads these it will write the pid of
+             * the child or -1 on failure, followed by boolean to
+             * indicate whether a wrapper process was used.
+             */
+            final BufferedWriter writer = zygoteState.writer;
+            final DataInputStream inputStream = zygoteState.inputStream;
+
+            writer.write(Integer.toString(args.size()));
+            writer.newLine();
+
+            int sz = args.size();
+            for (int i = 0; i &lt; sz; i++) {
+                String arg = args.get(i);
+                if (arg.indexOf(&apos;\n&apos;) &gt;= 0) {
+                    throw new ZygoteStartFailedEx(
+                            &quot;embedded newlines not allowed&quot;);
+                }
+                writer.write(arg);
+                writer.newLine();
+            }
+
+            writer.flush();
+
+            // Should there be a timeout on this?
+            ProcessStartResult result = new ProcessStartResult();
+            result.pid = inputStream.readInt();
+            if (result.pid &lt; 0) {
+                throw new ZygoteStartFailedEx(&quot;fork() failed&quot;);
+            }
+            result.usingWrapper = inputStream.readBoolean();
+            return result;
+        } catch (IOException ex) {
+            zygoteState.close();
+            throw new ZygoteStartFailedEx(ex);
+        }
+    }
+</code></pre><p> ####通过Zygote孵化了一个ActivityThread,去查看ActivityThread的main方法,转到ActivityThread-main</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2018/01/18/Process-start/" data-id="cjck3qur2000qc5s68j77xyn7" class="article-share-link">Teilen</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/android-Process-start-ActivityThread-main/">android Process-start ActivityThread-main</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+    <article id="post-ActivityManagerService-startProcessLocked" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2018/01/18/ActivityManagerService-startProcessLocked/" class="article-date">
+  <time datetime="2018-01-18T03:57:19.000Z" itemprop="datePublished">2018-01-18</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2018/01/18/ActivityManagerService-startProcessLocked/">ActivityManagerService-startProcessLocked</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>###源码位置com.android.server.am.ActivityManagerService.java</p>
+<pre><code>final ProcessRecord startProcessLocked(String processName,
+        ApplicationInfo info, boolean knownToBeDead, int intentFlags,
+        String hostingType, ComponentName hostingName, boolean allowWhileBooting,
+        boolean isolated, boolean keepIfLarge) {
+    return startProcessLocked(processName, info, knownToBeDead, intentFlags, hostingType,
+            hostingName, allowWhileBooting, isolated, 0 /* isolatedUid */, keepIfLarge,
+            null /* ABI override */, null /* entryPoint */, null /* entryPointArgs */,
+            null /* crashHandler */);
+}
+</code></pre><p>接着调用startProcessLocked的重载方法</p>
+<pre><code>final ProcessRecord startProcessLocked(String processName, ApplicationInfo info,
+        boolean knownToBeDead, int intentFlags, String hostingType, ComponentName hostingName,
+        boolean allowWhileBooting, boolean isolated, int isolatedUid, boolean keepIfLarge,
+        String abiOverride, String entryPoint, String[] entryPointArgs, Runnable crashHandler) {
+    long startTime = SystemClock.elapsedRealtime();
+    ProcessRecord app;
+    if (!isolated) {
+        app = getProcessRecordLocked(processName, info.uid, keepIfLarge);
+        checkTime(startTime, &quot;startProcess: after getProcessRecord&quot;);
+
+        if ((intentFlags &amp; Intent.FLAG_FROM_BACKGROUND) != 0) {
+            // If we are in the background, then check to see if this process
+            // is bad.  If so, we will just silently fail.
+            if (mBadProcesses.get(info.processName, info.uid) != null) {
+                if (DEBUG_PROCESSES) Slog.v(TAG, &quot;Bad process: &quot; + info.uid
+                        + &quot;/&quot; + info.processName);
+                return null;
+            }
+        } else {
+            // When the user is explicitly starting a process, then clear its
+            // crash count so that we won&apos;t make it bad until they see at
+            // least one crash dialog again, and make the process good again
+            // if it had been bad.
+            if (DEBUG_PROCESSES) Slog.v(TAG, &quot;Clearing bad process: &quot; + info.uid
+                    + &quot;/&quot; + info.processName);
+            mProcessCrashTimes.remove(info.processName, info.uid);
+            if (mBadProcesses.get(info.processName, info.uid) != null) {
+                EventLog.writeEvent(EventLogTags.AM_PROC_GOOD,
+                        UserHandle.getUserId(info.uid), info.uid,
+                        info.processName);
+                mBadProcesses.remove(info.processName, info.uid);
+                if (app != null) {
+                    app.bad = false;
+                }
+            }
+        }
+    } else {
+        // If this is an isolated process, it can&apos;t re-use an existing process.
+        app = null;
+    }
+
+    // We don&apos;t have to do anything more if:
+    // (1) There is an existing application record; and
+    // (2) The caller doesn&apos;t think it is dead, OR there is no thread
+    //     object attached to it so we know it couldn&apos;t have crashed; and
+    // (3) There is a pid assigned to it, so it is either starting or
+    //     already running.
+    if (DEBUG_PROCESSES) Slog.v(TAG_PROCESSES, &quot;startProcess: name=&quot; + processName
+            + &quot; app=&quot; + app + &quot; knownToBeDead=&quot; + knownToBeDead
+            + &quot; thread=&quot; + (app != null ? app.thread : null)
+            + &quot; pid=&quot; + (app != null ? app.pid : -1));
+    if (app != null &amp;&amp; app.pid &gt; 0) {
+        if (!knownToBeDead || app.thread == null) {
+            // We already have the app running, or are waiting for it to
+            // come up (we have a pid but not yet its thread), so keep it.
+            if (DEBUG_PROCESSES) Slog.v(TAG_PROCESSES, &quot;App already running: &quot; + app);
+            // If this is a new package in the process, add the package to the list
+            app.addPackage(info.packageName, info.versionCode, mProcessStats);
+            checkTime(startTime, &quot;startProcess: done, added package to proc&quot;);
+            return app;
+        }
+
+        // An application record is attached to a previous process,
+        // clean it up now.
+        if (DEBUG_PROCESSES || DEBUG_CLEANUP) Slog.v(TAG_PROCESSES, &quot;App died: &quot; + app);
+        checkTime(startTime, &quot;startProcess: bad proc running, killing&quot;);
+        killProcessGroup(app.info.uid, app.pid);
+        handleAppDiedLocked(app, true, true);
+        checkTime(startTime, &quot;startProcess: done killing old proc&quot;);
+    }
+
+    String hostingNameStr = hostingName != null
+            ? hostingName.flattenToShortString() : null;
+
+    if (app == null) {
+        checkTime(startTime, &quot;startProcess: creating new process record&quot;);
+        app = newProcessRecordLocked(info, processName, isolated, isolatedUid);
+        if (app == null) {
+            Slog.w(TAG, &quot;Failed making new process record for &quot;
+                    + processName + &quot;/&quot; + info.uid + &quot; isolated=&quot; + isolated);
+            return null;
+        }
+        app.crashHandler = crashHandler;
+        checkTime(startTime, &quot;startProcess: done creating new process record&quot;);
+    } else {
+        // If this is a new package in the process, add the package to the list
+        app.addPackage(info.packageName, info.versionCode, mProcessStats);
+        checkTime(startTime, &quot;startProcess: added package to existing proc&quot;);
+    }
+
+    // If the system is not ready yet, then hold off on starting this
+    // process until it is.
+    if (!mProcessesReady
+            &amp;&amp; !isAllowedWhileBooting(info)
+            &amp;&amp; !allowWhileBooting) {
+        if (!mProcessesOnHold.contains(app)) {
+            mProcessesOnHold.add(app);
+        }
+        if (DEBUG_PROCESSES) Slog.v(TAG_PROCESSES,
+                &quot;System not ready, putting on hold: &quot; + app);
+        checkTime(startTime, &quot;startProcess: returning with proc on hold&quot;);
+        return app;
+    }
+
+    checkTime(startTime, &quot;startProcess: stepping in to startProcess&quot;);
+    startProcessLocked(
+            app, hostingType, hostingNameStr, abiOverride, entryPoint, entryPointArgs);
+    checkTime(startTime, &quot;startProcess: done starting proc!&quot;);
+    return (app.pid != 0) ? app : null;
+}
+</code></pre><p>接着调用startProcessLocked的重载方法</p>
+<pre><code>private final void startProcessLocked(ProcessRecord app, String hostingType,
+            String hostingNameStr, String abiOverride, String entryPoint, String[] entryPointArgs) {
+        long startTime = SystemClock.elapsedRealtime();
+        if (app.pid &gt; 0 &amp;&amp; app.pid != MY_PID) {
+            checkTime(startTime, &quot;startProcess: removing from pids map&quot;);
+            synchronized (mPidsSelfLocked) {
+                mPidsSelfLocked.remove(app.pid);
+                mHandler.removeMessages(PROC_START_TIMEOUT_MSG, app);
+            }
+            checkTime(startTime, &quot;startProcess: done removing from pids map&quot;);
+            app.setPid(0);
+        }
+
+        if (DEBUG_PROCESSES &amp;&amp; mProcessesOnHold.contains(app)) Slog.v(TAG_PROCESSES,
+                &quot;startProcessLocked removing on hold: &quot; + app);
+        mProcessesOnHold.remove(app);
+
+        checkTime(startTime, &quot;startProcess: starting to update cpu stats&quot;);
+        updateCpuStats();
+        checkTime(startTime, &quot;startProcess: done updating cpu stats&quot;);
+
+        try {
+            try {
+                if (AppGlobals.getPackageManager().isPackageFrozen(app.info.packageName)) {
+                    // This is caught below as if we had failed to fork zygote
+                    throw new RuntimeException(&quot;Package &quot; + app.info.packageName + &quot; is frozen!&quot;);
+                }
+            } catch (RemoteException e) {
+                throw e.rethrowAsRuntimeException();
+            }
+
+            int uid = app.uid;
+            int[] gids = null;
+            int mountExternal = Zygote.MOUNT_EXTERNAL_NONE;
+            if (!app.isolated) {
+                int[] permGids = null;
+                try {
+                    checkTime(startTime, &quot;startProcess: getting gids from package manager&quot;);
+                    final IPackageManager pm = AppGlobals.getPackageManager();
+                    permGids = pm.getPackageGids(app.info.packageName, app.userId);
+                    MountServiceInternal mountServiceInternal = LocalServices.getService(
+                            MountServiceInternal.class);
+                    mountExternal = mountServiceInternal.getExternalStorageMountMode(uid,
+                            app.info.packageName);
+                } catch (RemoteException e) {
+                    throw e.rethrowAsRuntimeException();
+                }
+
+                /*
+                 * Add shared application and profile GIDs so applications can share some
+                 * resources like shared libraries and access user-wide resources
+                 */
+                if (ArrayUtils.isEmpty(permGids)) {
+                    gids = new int[2];
+                } else {
+                    gids = new int[permGids.length + 2];
+                    System.arraycopy(permGids, 0, gids, 2, permGids.length);
+                }
+                gids[0] = UserHandle.getSharedAppGid(UserHandle.getAppId(uid));
+                gids[1] = UserHandle.getUserGid(UserHandle.getUserId(uid));
+            }
+            checkTime(startTime, &quot;startProcess: building args&quot;);
+            if (mFactoryTest != FactoryTest.FACTORY_TEST_OFF) {
+                if (mFactoryTest == FactoryTest.FACTORY_TEST_LOW_LEVEL
+                        &amp;&amp; mTopComponent != null
+                        &amp;&amp; app.processName.equals(mTopComponent.getPackageName())) {
+                    uid = 0;
+                }
+                if (mFactoryTest == FactoryTest.FACTORY_TEST_HIGH_LEVEL
+                        &amp;&amp; (app.info.flags&amp;ApplicationInfo.FLAG_FACTORY_TEST) != 0) {
+                    uid = 0;
+                }
+            }
+            int debugFlags = 0;
+            if ((app.info.flags &amp; ApplicationInfo.FLAG_DEBUGGABLE) != 0) {
+                debugFlags |= Zygote.DEBUG_ENABLE_DEBUGGER;
+                // Also turn on CheckJNI for debuggable apps. It&apos;s quite
+                // awkward to turn on otherwise.
+                debugFlags |= Zygote.DEBUG_ENABLE_CHECKJNI;
+            }
+            // Run the app in safe mode if its manifest requests so or the
+            // system is booted in safe mode.
+            if ((app.info.flags &amp; ApplicationInfo.FLAG_VM_SAFE_MODE) != 0 ||
+                mSafeMode == true) {
+                debugFlags |= Zygote.DEBUG_ENABLE_SAFEMODE;
+            }
+            if (&quot;1&quot;.equals(SystemProperties.get(&quot;debug.checkjni&quot;))) {
+                debugFlags |= Zygote.DEBUG_ENABLE_CHECKJNI;
+            }
+            String jitDebugProperty = SystemProperties.get(&quot;debug.usejit&quot;);
+            if (&quot;true&quot;.equals(jitDebugProperty)) {
+                debugFlags |= Zygote.DEBUG_ENABLE_JIT;
+            } else if (!&quot;false&quot;.equals(jitDebugProperty)) {
+                // If we didn&apos;t force disable by setting false, defer to the dalvik vm options.
+                if (&quot;true&quot;.equals(SystemProperties.get(&quot;dalvik.vm.usejit&quot;))) {
+                    debugFlags |= Zygote.DEBUG_ENABLE_JIT;
+                }
+            }
+            String genDebugInfoProperty = SystemProperties.get(&quot;debug.generate-debug-info&quot;);
+            if (&quot;true&quot;.equals(genDebugInfoProperty)) {
+                debugFlags |= Zygote.DEBUG_GENERATE_DEBUG_INFO;
+            }
+            if (&quot;1&quot;.equals(SystemProperties.get(&quot;debug.jni.logging&quot;))) {
+                debugFlags |= Zygote.DEBUG_ENABLE_JNI_LOGGING;
+            }
+            if (&quot;1&quot;.equals(SystemProperties.get(&quot;debug.assert&quot;))) {
+                debugFlags |= Zygote.DEBUG_ENABLE_ASSERT;
+            }
+
+            String requiredAbi = (abiOverride != null) ? abiOverride : app.info.primaryCpuAbi;
+            if (requiredAbi == null) {
+                requiredAbi = Build.SUPPORTED_ABIS[0];
+            }
+
+            String instructionSet = null;
+            if (app.info.primaryCpuAbi != null) {
+                instructionSet = VMRuntime.getInstructionSet(app.info.primaryCpuAbi);
+            }
+
+            app.gids = gids;
+            app.requiredAbi = requiredAbi;
+            app.instructionSet = instructionSet;
+
+            // Start the process.  It will either succeed and return a result containing
+            // the PID of the new process, or else throw a RuntimeException.
+            boolean isActivityProcess = (entryPoint == null);
+            if (entryPoint == null) entryPoint = &quot;android.app.ActivityThread&quot;;
+            Trace.traceBegin(Trace.TRACE_TAG_ACTIVITY_MANAGER, &quot;Start proc: &quot; +
+                    app.processName);
+            checkTime(startTime, &quot;startProcess: asking zygote to start proc&quot;);
+
+            Process.ProcessStartResult startResult = Process.start(entryPoint,
+                    app.processName, uid, uid, gids, debugFlags, mountExternal,
+                    app.info.targetSdkVersion, app.info.seinfo, requiredAbi, instructionSet,
+                    app.info.dataDir, entryPointArgs);
+            checkTime(startTime, &quot;startProcess: returned from zygote!&quot;);
+            Trace.traceEnd(Trace.TRACE_TAG_ACTIVITY_MANAGER);
+
+            if (app.isolated) {
+                mBatteryStatsService.addIsolatedUid(app.uid, app.info.uid);
+            }
+            mBatteryStatsService.noteProcessStart(app.processName, app.info.uid);
+            checkTime(startTime, &quot;startProcess: done updating battery stats&quot;);
+
+            EventLog.writeEvent(EventLogTags.AM_PROC_START,
+                    UserHandle.getUserId(uid), startResult.pid, uid,
+                    app.processName, hostingType,
+                    hostingNameStr != null ? hostingNameStr : &quot;&quot;);
+
+            if (app.persistent) {
+                Watchdog.getInstance().processStarted(app.processName, startResult.pid);
+            }
+
+            checkTime(startTime, &quot;startProcess: building log message&quot;);
+            StringBuilder buf = mStringBuilder;
+            buf.setLength(0);
+            buf.append(&quot;Start proc &quot;);
+            buf.append(startResult.pid);
+            buf.append(&apos;:&apos;);
+            buf.append(app.processName);
+            buf.append(&apos;/&apos;);
+            UserHandle.formatUid(buf, uid);
+            if (!isActivityProcess) {
+                buf.append(&quot; [&quot;);
+                buf.append(entryPoint);
+                buf.append(&quot;]&quot;);
+            }
+            buf.append(&quot; for &quot;);
+            buf.append(hostingType);
+            if (hostingNameStr != null) {
+                buf.append(&quot; &quot;);
+                buf.append(hostingNameStr);
+            }
+            Slog.i(TAG, buf.toString());
+            app.setPid(startResult.pid);
+            app.usingWrapper = startResult.usingWrapper;
+            app.removed = false;
+            app.killed = false;
+            app.killedByAm = false;
+            checkTime(startTime, &quot;startProcess: starting to update pids map&quot;);
+            synchronized (mPidsSelfLocked) {
+                this.mPidsSelfLocked.put(startResult.pid, app);
+                if (isActivityProcess) {
+                    Message msg = mHandler.obtainMessage(PROC_START_TIMEOUT_MSG);
+                    msg.obj = app;
+                    mHandler.sendMessageDelayed(msg, startResult.usingWrapper
+                            ? PROC_START_TIMEOUT_WITH_WRAPPER : PROC_START_TIMEOUT);
+                }
+            }
+            checkTime(startTime, &quot;startProcess: done updating pids map&quot;);
+        } catch (RuntimeException e) {
+            // XXX do better error recovery.
+            app.setPid(0);
+            mBatteryStatsService.noteProcessFinish(app.processName, app.info.uid);
+            if (app.isolated) {
+                mBatteryStatsService.removeIsolatedUid(app.uid, app.info.uid);
+            }
+            Slog.e(TAG, &quot;Failure starting process &quot; + app.processName, e);
+        }
+    }
+</code></pre><p>重点</p>
+<pre><code>Process.ProcessStartResult startResult = Process.start(entryPoint,
+                           app.processName, uid, uid, gids, debugFlags, mountExternal,
+                           app.info.targetSdkVersion, app.info.seinfo, requiredAbi, instructionSet,
+                           app.info.dataDir, entryPointArgs);      
+</code></pre><p>###转到Process-start                                     </p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2018/01/18/ActivityManagerService-startProcessLocked/" data-id="cjck3quq80004c5s6p28wuers" class="article-share-link">Teilen</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/android-ActivityManagerService-startProcessLocked-Process-start/">android ActivityManagerService-startProcessLocked Process-start</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+    <article id="post-ActivityStackSupervisor-startSpecificActivityLocked" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2018/01/18/ActivityStackSupervisor-startSpecificActivityLocked/" class="article-date">
+  <time datetime="2018-01-18T03:53:39.000Z" itemprop="datePublished">2018-01-18</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2018/01/18/ActivityStackSupervisor-startSpecificActivityLocked/">ActivityStackSupervisor-startSpecificActivityLocked</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>###源码位置com.android.server.am.ActivityStackSupervisor.java</p>
+<p>查看startSpecificActivityLocked方法</p>
+<pre><code>void startSpecificActivityLocked(ActivityRecord r,
+        boolean andResume, boolean checkConfig) {
+    // Is this activity&apos;s application already running?
+    ProcessRecord app = mService.getProcessRecordLocked(r.processName,
+            r.info.applicationInfo.uid, true);
+
+    r.task.stack.setLaunchTime(r);
+
+    if (app != null &amp;&amp; app.thread != null) {
+        try {
+            if ((r.info.flags&amp;ActivityInfo.FLAG_MULTIPROCESS) == 0
+                    || !&quot;android&quot;.equals(r.info.packageName)) {
+                // Don&apos;t add this if it is a platform component that is marked
+                // to run in multiple processes, because this is actually
+                // part of the framework so doesn&apos;t make sense to track as a
+                // separate apk in the process.
+                app.addPackage(r.info.packageName, r.info.applicationInfo.versionCode,
+                        mService.mProcessStats);
+            }
+            realStartActivityLocked(r, app, andResume, checkConfig);
+            return;
+        } catch (RemoteException e) {
+            Slog.w(TAG, &quot;Exception when starting activity &quot;
+                    + r.intent.getComponent().flattenToShortString(), e);
+        }
+
+        // If a dead object exception was thrown -- fall through to
+        // restart the application.
+    }
+
+    mService.startProcessLocked(r.processName, r.info.applicationInfo, true, 0,
+            &quot;activity&quot;, r.intent.getComponent(), false, false, true);
+}
+</code></pre><p>###转到ActivityManagerService-startProcessLocked</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2018/01/18/ActivityStackSupervisor-startSpecificActivityLocked/" data-id="cjck3quqi000dc5s6wslqke7o" class="article-share-link">Teilen</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/android-ActivityStackSupervisor-startSpecificActivityLocked-ActivityManagerService-startProcessLocked/">android ActivityStackSupervisor-startSpecificActivityLocked ActivityManagerService-startProcessLocked</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+    <article id="post-ActivityStack-resumeTopActivityLocked" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2018/01/18/ActivityStack-resumeTopActivityLocked/" class="article-date">
+  <time datetime="2018-01-18T03:48:33.000Z" itemprop="datePublished">2018-01-18</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2018/01/18/ActivityStack-resumeTopActivityLocked/">ActivityStack-resumeTopActivityLocked</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>###源码位置com.android.server.am.ActivityStack.java<br>查看resumeTopActivityLocked方法</p>
+<pre><code>final boolean resumeTopActivityLocked(ActivityRecord prev, Bundle options) {
+    if (mStackSupervisor.inResumeTopActivity) {
+        // Don&apos;t even start recursing.
+        return false;
+    }
+
+    boolean result = false;
+    try {
+        // Protect against recursion.
+        mStackSupervisor.inResumeTopActivity = true;
+        if (mService.mLockScreenShown == ActivityManagerService.LOCK_SCREEN_LEAVING) {
+            mService.mLockScreenShown = ActivityManagerService.LOCK_SCREEN_HIDDEN;
+            mService.updateSleepIfNeededLocked();
+        }
+        result = resumeTopActivityInnerLocked(prev, options);
+    } finally {
+        mStackSupervisor.inResumeTopActivity = false;
+    }
+    return result;
+}
+</code></pre><p>继续调用resumeTopActivityInnerLocked方法</p>
+<pre><code>private boolean resumeTopActivityInnerLocked(ActivityRecord prev, Bundle options) {
+        if (DEBUG_LOCKSCREEN) mService.logLockScreen(&quot;&quot;);
+
+        if (!mService.mBooting &amp;&amp; !mService.mBooted) {
+            // Not ready yet!
+            return false;
+        }
+
+        ActivityRecord parent = mActivityContainer.mParentActivity;
+        if ((parent != null &amp;&amp; parent.state != ActivityState.RESUMED) ||
+                !mActivityContainer.isAttachedLocked()) {
+            // Do not resume this stack if its parent is not resumed.
+            // TODO: If in a loop, make sure that parent stack resumeTopActivity is called 1st.
+            return false;
+        }
+
+        cancelInitializingActivities();
+
+        // Find the first activity that is not finishing.
+        final ActivityRecord next = topRunningActivityLocked(null);
+
+        // Remember how we&apos;ll process this pause/resume situation, and ensure
+        // that the state is reset however we wind up proceeding.
+        final boolean userLeaving = mStackSupervisor.mUserLeaving;
+        mStackSupervisor.mUserLeaving = false;
+
+        final TaskRecord prevTask = prev != null ? prev.task : null;
+        if (next == null) {
+            // There are no more activities!
+            final String reason = &quot;noMoreActivities&quot;;
+            if (!mFullscreen) {
+                // Try to move focus to the next visible stack with a running activity if this
+                // stack is not covering the entire screen.
+                final ActivityStack stack = getNextVisibleStackLocked();
+                if (adjustFocusToNextVisibleStackLocked(stack, reason)) {
+                    return mStackSupervisor.resumeTopActivitiesLocked(stack, prev, null);
+                }
+            }
+            // Let&apos;s just start up the Launcher...
+            ActivityOptions.abort(options);
+            if (DEBUG_STATES) Slog.d(TAG_STATES,
+                    &quot;resumeTopActivityLocked: No more activities go home&quot;);
+            if (DEBUG_STACK) mStackSupervisor.validateTopActivitiesLocked();
+            // Only resume home if on home display
+            final int returnTaskType = prevTask == null || !prevTask.isOverHomeStack() ?
+                    HOME_ACTIVITY_TYPE : prevTask.getTaskToReturnTo();
+            return isOnHomeDisplay() &amp;&amp;
+                    mStackSupervisor.resumeHomeStackTask(returnTaskType, prev, reason);
+        }
+
+        next.delayedResume = false;
+
+        // If the top activity is the resumed one, nothing to do.
+        if (mResumedActivity == next &amp;&amp; next.state == ActivityState.RESUMED &amp;&amp;
+                    mStackSupervisor.allResumedActivitiesComplete()) {
+            // Make sure we have executed any pending transitions, since there
+            // should be nothing left to do at this point.
+            mWindowManager.executeAppTransition();
+            mNoAnimActivities.clear();
+            ActivityOptions.abort(options);
+            if (DEBUG_STATES) Slog.d(TAG_STATES,
+                    &quot;resumeTopActivityLocked: Top activity resumed &quot; + next);
+            if (DEBUG_STACK) mStackSupervisor.validateTopActivitiesLocked();
+            return false;
+        }
+
+        final TaskRecord nextTask = next.task;
+        if (prevTask != null &amp;&amp; prevTask.stack == this &amp;&amp;
+                prevTask.isOverHomeStack() &amp;&amp; prev.finishing &amp;&amp; prev.frontOfTask) {
+            if (DEBUG_STACK)  mStackSupervisor.validateTopActivitiesLocked();
+            if (prevTask == nextTask) {
+                prevTask.setFrontOfTask();
+            } else if (prevTask != topTask()) {
+                // This task is going away but it was supposed to return to the home stack.
+                // Now the task above it has to return to the home task instead.
+                final int taskNdx = mTaskHistory.indexOf(prevTask) + 1;
+                mTaskHistory.get(taskNdx).setTaskToReturnTo(HOME_ACTIVITY_TYPE);
+            } else if (!isOnHomeDisplay()) {
+                return false;
+            } else if (!isHomeStack()){
+                if (DEBUG_STATES) Slog.d(TAG_STATES,
+                        &quot;resumeTopActivityLocked: Launching home next&quot;);
+                final int returnTaskType = prevTask == null || !prevTask.isOverHomeStack() ?
+                        HOME_ACTIVITY_TYPE : prevTask.getTaskToReturnTo();
+                return isOnHomeDisplay() &amp;&amp;
+                        mStackSupervisor.resumeHomeStackTask(returnTaskType, prev, &quot;prevFinished&quot;);
+            }
+        }
+
+        // If we are sleeping, and there is no resumed activity, and the top
+        // activity is paused, well that is the state we want.
+        if (mService.isSleepingOrShuttingDown()
+                &amp;&amp; mLastPausedActivity == next
+                &amp;&amp; mStackSupervisor.allPausedActivitiesComplete()) {
+            // Make sure we have executed any pending transitions, since there
+            // should be nothing left to do at this point.
+            mWindowManager.executeAppTransition();
+            mNoAnimActivities.clear();
+            ActivityOptions.abort(options);
+            if (DEBUG_STATES) Slog.d(TAG_STATES,
+                    &quot;resumeTopActivityLocked: Going to sleep and all paused&quot;);
+            if (DEBUG_STACK) mStackSupervisor.validateTopActivitiesLocked();
+            return false;
+        }
+
+        // Make sure that the user who owns this activity is started.  If not,
+        // we will just leave it as is because someone should be bringing
+        // another user&apos;s activities to the top of the stack.
+        if (mService.mStartedUsers.get(next.userId) == null) {
+            Slog.w(TAG, &quot;Skipping resume of top activity &quot; + next
+                    + &quot;: user &quot; + next.userId + &quot; is stopped&quot;);
+            if (DEBUG_STACK) mStackSupervisor.validateTopActivitiesLocked();
+            return false;
+        }
+
+        // The activity may be waiting for stop, but that is no longer
+        // appropriate for it.
+        mStackSupervisor.mStoppingActivities.remove(next);
+        mStackSupervisor.mGoingToSleepActivities.remove(next);
+        next.sleeping = false;
+        mStackSupervisor.mWaitingVisibleActivities.remove(next);
+
+        if (DEBUG_SWITCH) Slog.v(TAG_SWITCH, &quot;Resuming &quot; + next);
+
+        // If we are currently pausing an activity, then don&apos;t do anything
+        // until that is done.
+        if (!mStackSupervisor.allPausedActivitiesComplete()) {
+            if (DEBUG_SWITCH || DEBUG_PAUSE || DEBUG_STATES) Slog.v(TAG_PAUSE,
+                    &quot;resumeTopActivityLocked: Skip resume: some activity pausing.&quot;);
+            if (DEBUG_STACK) mStackSupervisor.validateTopActivitiesLocked();
+            return false;
+        }
+
+        // Okay we are now going to start a switch, to &apos;next&apos;.  We may first
+        // have to pause the current activity, but this is an important point
+        // where we have decided to go to &apos;next&apos; so keep track of that.
+        // XXX &quot;App Redirected&quot; dialog is getting too many false positives
+        // at this point, so turn off for now.
+        if (false) {
+            if (mLastStartedActivity != null &amp;&amp; !mLastStartedActivity.finishing) {
+                long now = SystemClock.uptimeMillis();
+                final boolean inTime = mLastStartedActivity.startTime != 0
+                        &amp;&amp; (mLastStartedActivity.startTime + START_WARN_TIME) &gt;= now;
+                final int lastUid = mLastStartedActivity.info.applicationInfo.uid;
+                final int nextUid = next.info.applicationInfo.uid;
+                if (inTime &amp;&amp; lastUid != nextUid
+                        &amp;&amp; lastUid != next.launchedFromUid
+                        &amp;&amp; mService.checkPermission(
+                                android.Manifest.permission.STOP_APP_SWITCHES,
+                                -1, next.launchedFromUid)
+                        != PackageManager.PERMISSION_GRANTED) {
+                    mService.showLaunchWarningLocked(mLastStartedActivity, next);
+                } else {
+                    next.startTime = now;
+                    mLastStartedActivity = next;
+                }
+            } else {
+                next.startTime = SystemClock.uptimeMillis();
+                mLastStartedActivity = next;
+            }
+        }
+
+        mStackSupervisor.setLaunchSource(next.info.applicationInfo.uid);
+
+        // We need to start pausing the current activity so the top one
+        // can be resumed...
+        boolean dontWaitForPause = (next.info.flags&amp;ActivityInfo.FLAG_RESUME_WHILE_PAUSING) != 0;
+        boolean pausing = mStackSupervisor.pauseBackStacks(userLeaving, true, dontWaitForPause);
+        if (mResumedActivity != null) {
+            if (DEBUG_STATES) Slog.d(TAG_STATES,
+                    &quot;resumeTopActivityLocked: Pausing &quot; + mResumedActivity);
+            pausing |= startPausingLocked(userLeaving, false, true, dontWaitForPause);
+        }
+        if (pausing) {
+            if (DEBUG_SWITCH || DEBUG_STATES) Slog.v(TAG_STATES,
+                    &quot;resumeTopActivityLocked: Skip resume: need to start pausing&quot;);
+            // At this point we want to put the upcoming activity&apos;s process
+            // at the top of the LRU list, since we know we will be needing it
+            // very soon and it would be a waste to let it get killed if it
+            // happens to be sitting towards the end.
+            if (next.app != null &amp;&amp; next.app.thread != null) {
+                mService.updateLruProcessLocked(next.app, true, null);
+            }
+            if (DEBUG_STACK) mStackSupervisor.validateTopActivitiesLocked();
+            return true;
+        }
+
+        // If the most recent activity was noHistory but was only stopped rather
+        // than stopped+finished because the device went to sleep, we need to make
+        // sure to finish it as we&apos;re making a new activity topmost.
+        if (mService.isSleeping() &amp;&amp; mLastNoHistoryActivity != null &amp;&amp;
+                !mLastNoHistoryActivity.finishing) {
+            if (DEBUG_STATES) Slog.d(TAG_STATES,
+                    &quot;no-history finish of &quot; + mLastNoHistoryActivity + &quot; on new resume&quot;);
+            requestFinishActivityLocked(mLastNoHistoryActivity.appToken, Activity.RESULT_CANCELED,
+                    null, &quot;resume-no-history&quot;, false);
+            mLastNoHistoryActivity = null;
+        }
+
+        if (prev != null &amp;&amp; prev != next) {
+            if (!mStackSupervisor.mWaitingVisibleActivities.contains(prev)
+                    &amp;&amp; next != null &amp;&amp; !next.nowVisible) {
+                mStackSupervisor.mWaitingVisibleActivities.add(prev);
+                if (DEBUG_SWITCH) Slog.v(TAG_SWITCH,
+                        &quot;Resuming top, waiting visible to hide: &quot; + prev);
+            } else {
+                // The next activity is already visible, so hide the previous
+                // activity&apos;s windows right now so we can show the new one ASAP.
+                // We only do this if the previous is finishing, which should mean
+                // it is on top of the one being resumed so hiding it quickly
+                // is good.  Otherwise, we want to do the normal route of allowing
+                // the resumed activity to be shown so we can decide if the
+                // previous should actually be hidden depending on whether the
+                // new one is found to be full-screen or not.
+                if (prev.finishing) {
+                    mWindowManager.setAppVisibility(prev.appToken, false);
+                    if (DEBUG_SWITCH) Slog.v(TAG_SWITCH,
+                            &quot;Not waiting for visible to hide: &quot; + prev + &quot;, waitingVisible=&quot;
+                            + mStackSupervisor.mWaitingVisibleActivities.contains(prev)
+                            + &quot;, nowVisible=&quot; + next.nowVisible);
+                } else {
+                    if (DEBUG_SWITCH) Slog.v(TAG_SWITCH,
+                            &quot;Previous already visible but still waiting to hide: &quot; + prev
+                            + &quot;, waitingVisible=&quot;
+                            + mStackSupervisor.mWaitingVisibleActivities.contains(prev)
+                            + &quot;, nowVisible=&quot; + next.nowVisible);
+                }
+            }
+        }
+
+        // Launching this app&apos;s activity, make sure the app is no longer
+        // considered stopped.
+        try {
+            AppGlobals.getPackageManager().setPackageStoppedState(
+                    next.packageName, false, next.userId); /* TODO: Verify if correct userid */
+        } catch (RemoteException e1) {
+        } catch (IllegalArgumentException e) {
+            Slog.w(TAG, &quot;Failed trying to unstop package &quot;
+                    + next.packageName + &quot;: &quot; + e);
+        }
+
+        // We are starting up the next activity, so tell the window manager
+        // that the previous one will be hidden soon.  This way it can know
+        // to ignore it when computing the desired screen orientation.
+        boolean anim = true;
+        if (prev != null) {
+            if (prev.finishing) {
+                if (DEBUG_TRANSITION) Slog.v(TAG_TRANSITION,
+                        &quot;Prepare close transition: prev=&quot; + prev);
+                if (mNoAnimActivities.contains(prev)) {
+                    anim = false;
+                    mWindowManager.prepareAppTransition(AppTransition.TRANSIT_NONE, false);
+                } else {
+                    mWindowManager.prepareAppTransition(prev.task == next.task
+                            ? AppTransition.TRANSIT_ACTIVITY_CLOSE
+                            : AppTransition.TRANSIT_TASK_CLOSE, false);
+                }
+                mWindowManager.setAppWillBeHidden(prev.appToken);
+                mWindowManager.setAppVisibility(prev.appToken, false);
+            } else {
+                if (DEBUG_TRANSITION) Slog.v(TAG_TRANSITION,
+                        &quot;Prepare open transition: prev=&quot; + prev);
+                if (mNoAnimActivities.contains(next)) {
+                    anim = false;
+                    mWindowManager.prepareAppTransition(AppTransition.TRANSIT_NONE, false);
+                } else {
+                    mWindowManager.prepareAppTransition(prev.task == next.task
+                            ? AppTransition.TRANSIT_ACTIVITY_OPEN
+                            : next.mLaunchTaskBehind
+                                    ? AppTransition.TRANSIT_TASK_OPEN_BEHIND
+                                    : AppTransition.TRANSIT_TASK_OPEN, false);
+                }
+            }
+            if (false) {
+                mWindowManager.setAppWillBeHidden(prev.appToken);
+                mWindowManager.setAppVisibility(prev.appToken, false);
+            }
+        } else {
+            if (DEBUG_TRANSITION) Slog.v(TAG_TRANSITION, &quot;Prepare open transition: no previous&quot;);
+            if (mNoAnimActivities.contains(next)) {
+                anim = false;
+                mWindowManager.prepareAppTransition(AppTransition.TRANSIT_NONE, false);
+            } else {
+                mWindowManager.prepareAppTransition(AppTransition.TRANSIT_ACTIVITY_OPEN, false);
+            }
+        }
+
+        Bundle resumeAnimOptions = null;
+        if (anim) {
+            ActivityOptions opts = next.getOptionsForTargetActivityLocked();
+            if (opts != null) {
+                resumeAnimOptions = opts.toBundle();
+            }
+            next.applyOptionsLocked();
+        } else {
+            next.clearOptionsLocked();
+        }
+
+        ActivityStack lastStack = mStackSupervisor.getLastStack();
+        if (next.app != null &amp;&amp; next.app.thread != null) {
+            if (DEBUG_SWITCH) Slog.v(TAG_SWITCH, &quot;Resume running: &quot; + next);
+
+            // This activity is now becoming visible.
+            mWindowManager.setAppVisibility(next.appToken, true);
+
+            // schedule launch ticks to collect information about slow apps.
+            next.startLaunchTickingLocked();
+
+            ActivityRecord lastResumedActivity =
+                    lastStack == null ? null :lastStack.mResumedActivity;
+            ActivityState lastState = next.state;
+
+            mService.updateCpuStats();
+
+            if (DEBUG_STATES) Slog.v(TAG_STATES, &quot;Moving to RESUMED: &quot; + next + &quot; (in existing)&quot;);
+            next.state = ActivityState.RESUMED;
+            mResumedActivity = next;
+            next.task.touchActiveTime();
+            mRecentTasks.addLocked(next.task);
+            mService.updateLruProcessLocked(next.app, true, null);
+            updateLRUListLocked(next);
+            mService.updateOomAdjLocked();
+
+            // Have the window manager re-evaluate the orientation of
+            // the screen based on the new activity order.
+            boolean notUpdated = true;
+            if (mStackSupervisor.isFrontStack(this)) {
+                Configuration config = mWindowManager.updateOrientationFromAppTokens(
+                        mService.mConfiguration,
+                        next.mayFreezeScreenLocked(next.app) ? next.appToken : null);
+                if (config != null) {
+                    next.frozenBeforeDestroy = true;
+                }
+                notUpdated = !mService.updateConfigurationLocked(config, next, false, false);
+            }
+
+            if (notUpdated) {
+                // The configuration update wasn&apos;t able to keep the existing
+                // instance of the activity, and instead started a new one.
+                // We should be all done, but let&apos;s just make sure our activity
+                // is still at the top and schedule another run if something
+                // weird happened.
+                ActivityRecord nextNext = topRunningActivityLocked(null);
+                if (DEBUG_SWITCH || DEBUG_STATES) Slog.i(TAG_STATES,
+                        &quot;Activity config changed during resume: &quot; + next
+                        + &quot;, new next: &quot; + nextNext);
+                if (nextNext != next) {
+                    // Do over!
+                    mStackSupervisor.scheduleResumeTopActivities();
+                }
+                if (mStackSupervisor.reportResumedActivityLocked(next)) {
+                    mNoAnimActivities.clear();
+                    if (DEBUG_STACK) mStackSupervisor.validateTopActivitiesLocked();
+                    return true;
+                }
+                if (DEBUG_STACK) mStackSupervisor.validateTopActivitiesLocked();
+                return false;
+            }
+
+            try {
+                // Deliver all pending results.
+                ArrayList&lt;ResultInfo&gt; a = next.results;
+                if (a != null) {
+                    final int N = a.size();
+                    if (!next.finishing &amp;&amp; N &gt; 0) {
+                        if (DEBUG_RESULTS) Slog.v(TAG_RESULTS,
+                                &quot;Delivering results to &quot; + next + &quot;: &quot; + a);
+                        next.app.thread.scheduleSendResult(next.appToken, a);
+                    }
+                }
+
+                if (next.newIntents != null) {
+                    next.app.thread.scheduleNewIntent(next.newIntents, next.appToken);
+                }
+
+                EventLog.writeEvent(EventLogTags.AM_RESUME_ACTIVITY, next.userId,
+                        System.identityHashCode(next), next.task.taskId, next.shortComponentName);
+
+                next.sleeping = false;
+                mService.showAskCompatModeDialogLocked(next);
+                next.app.pendingUiClean = true;
+                next.app.forceProcessStateUpTo(mService.mTopProcessState);
+                next.clearOptionsLocked();
+                next.app.thread.scheduleResumeActivity(next.appToken, next.app.repProcState,
+                        mService.isNextTransitionForward(), resumeAnimOptions);
+
+                mStackSupervisor.checkReadyForSleepLocked();
+
+                if (DEBUG_STATES) Slog.d(TAG_STATES, &quot;resumeTopActivityLocked: Resumed &quot; + next);
+            } catch (Exception e) {
+                // Whoops, need to restart this activity!
+                if (DEBUG_STATES) Slog.v(TAG_STATES, &quot;Resume failed; resetting state to &quot;
+                        + lastState + &quot;: &quot; + next);
+                next.state = lastState;
+                if (lastStack != null) {
+                    lastStack.mResumedActivity = lastResumedActivity;
+                }
+                Slog.i(TAG, &quot;Restarting because process died: &quot; + next);
+                if (!next.hasBeenLaunched) {
+                    next.hasBeenLaunched = true;
+                } else  if (SHOW_APP_STARTING_PREVIEW &amp;&amp; lastStack != null &amp;&amp;
+                        mStackSupervisor.isFrontStack(lastStack)) {
+                    mWindowManager.setAppStartingWindow(
+                            next.appToken, next.packageName, next.theme,
+                            mService.compatibilityInfoForPackageLocked(next.info.applicationInfo),
+                            next.nonLocalizedLabel, next.labelRes, next.icon, next.logo,
+                            next.windowFlags, null, true);
+                }
+                mStackSupervisor.startSpecificActivityLocked(next, true, false);
+                if (DEBUG_STACK) mStackSupervisor.validateTopActivitiesLocked();
+                return true;
+            }
+
+            // From this point on, if something goes wrong there is no way
+            // to recover the activity.
+            try {
+                next.visible = true;
+                completeResumeLocked(next);
+            } catch (Exception e) {
+                // If any exception gets thrown, toss away this
+                // activity and try the next one.
+                Slog.w(TAG, &quot;Exception thrown during resume of &quot; + next, e);
+                requestFinishActivityLocked(next.appToken, Activity.RESULT_CANCELED, null,
+                        &quot;resume-exception&quot;, true);
+                if (DEBUG_STACK) mStackSupervisor.validateTopActivitiesLocked();
+                return true;
+            }
+            next.stopped = false;
+
+        } else {
+            // Whoops, need to restart this activity!
+            if (!next.hasBeenLaunched) {
+                next.hasBeenLaunched = true;
+            } else {
+                if (SHOW_APP_STARTING_PREVIEW) {
+                    mWindowManager.setAppStartingWindow(
+                            next.appToken, next.packageName, next.theme,
+                            mService.compatibilityInfoForPackageLocked(
+                                    next.info.applicationInfo),
+                            next.nonLocalizedLabel,
+                            next.labelRes, next.icon, next.logo, next.windowFlags,
+                            null, true);
+                }
+                if (DEBUG_SWITCH) Slog.v(TAG_SWITCH, &quot;Restarting: &quot; + next);
+            }
+            if (DEBUG_STATES) Slog.d(TAG_STATES, &quot;resumeTopActivityLocked: Restarting &quot; + next);
+            mStackSupervisor.startSpecificActivityLocked(next, true, true);
+        }
+
+        if (DEBUG_STACK) mStackSupervisor.validateTopActivitiesLocked();
+        return true;
+    }
+</code></pre><p>###转到ActivityStackSupervisor-startSpecificActivityLocked</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2018/01/18/ActivityStack-resumeTopActivityLocked/" data-id="cjck3quqg000bc5s6pgorxgn7" class="article-share-link">Teilen</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/android-ActivityStack-resumeTopActivityLocked-ActivityStackSupervisor-startSpecificActivityLocked/">android ActivityStack-resumeTopActivityLocked ActivityStackSupervisor-startSpecificActivityLocked</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+    <article id="post-ActivityStackSupervisor-resumeTopActivitiesLocked" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2018/01/18/ActivityStackSupervisor-resumeTopActivitiesLocked/" class="article-date">
+  <time datetime="2018-01-18T03:44:56.000Z" itemprop="datePublished">2018-01-18</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2018/01/18/ActivityStackSupervisor-resumeTopActivitiesLocked/">ActivityStackSupervisor-resumeTopActivitiesLocked</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>###源码位置com.android.server.am.ActivityStackSupervisor.java</p>
+<p>查看resumeTopActivitiesLocked方法</p>
+<pre><code>boolean resumeTopActivitiesLocked(ActivityStack targetStack, ActivityRecord target,
+            Bundle targetOptions) {
+        if (targetStack == null) {
+            targetStack = mFocusedStack;
+        }
+        // Do targetStack first.
+        boolean result = false;
+        if (isFrontStack(targetStack)) {
+            result = targetStack.resumeTopActivityLocked(target, targetOptions);
+        }
+
+        for (int displayNdx = mActivityDisplays.size() - 1; displayNdx &gt;= 0; --displayNdx) {
+            final ArrayList&lt;ActivityStack&gt; stacks = mActivityDisplays.valueAt(displayNdx).mStacks;
+            for (int stackNdx = stacks.size() - 1; stackNdx &gt;= 0; --stackNdx) {
+                final ActivityStack stack = stacks.get(stackNdx);
+                if (stack == targetStack) {
+                    // Already started above.
+                    continue;
+                }
+                if (isFrontStack(stack)) {
+                    stack.resumeTopActivityLocked(null);
+                }
+            }
+        }
+        return result;
+    }
+</code></pre><p>###转到ActivityStack-resumeTopActivityLocked</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2018/01/18/ActivityStackSupervisor-resumeTopActivitiesLocked/" data-id="cjck3quqc0008c5s61a4sq464" class="article-share-link">Teilen</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/android-ActivityStackSupervisor-resumeTopActivitiesLocked-ActivityStack-resumeTopActivityLocked/">android ActivityStackSupervisor-resumeTopActivitiesLocked ActivityStack-resumeTopActivityLocked</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+    <article id="post-ActivityStack-startActivityLocked" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2018/01/18/ActivityStack-startActivityLocked/" class="article-date">
+  <time datetime="2018-01-18T03:35:02.000Z" itemprop="datePublished">2018-01-18</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2018/01/18/ActivityStack-startActivityLocked/">ActivityStack-startActivityLocked</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>###源码位置 com.android.server.am.ActivityStack.java</p>
+<pre><code>简介
+final class ActivityStack {}
+没有继承任何类，也不能被任何类继承，没有实现任何接口
+
+/**
+ * State and management of a single stack of activities.
+ */
+ Activities单个栈的状态和管理
+</code></pre><p>查看startActivityLocked方法</p>
+<pre><code>final void startActivityLocked(ActivityRecord r, boolean newTask,
+            boolean doResume, boolean keepCurTransition, Bundle options) {
+        TaskRecord rTask = r.task;
+        final int taskId = rTask.taskId;
+        // mLaunchTaskBehind tasks get placed at the back of the task stack.
+        if (!r.mLaunchTaskBehind &amp;&amp; (taskForIdLocked(taskId) == null || newTask)) {
+            // Last activity in task had been removed or ActivityManagerService is reusing task.
+            // Insert or replace.
+            // Might not even be in.
+            insertTaskAtTop(rTask, r);
+            mWindowManager.moveTaskToTop(taskId);
+        }
+        TaskRecord task = null;
+        if (!newTask) {
+            // If starting in an existing task, find where that is...
+            boolean startIt = true;
+            for (int taskNdx = mTaskHistory.size() - 1; taskNdx &gt;= 0; --taskNdx) {
+                task = mTaskHistory.get(taskNdx);
+                if (task.getTopActivity() == null) {
+                    // All activities in task are finishing.
+                    continue;
+                }
+                if (task == r.task) {
+                    // Here it is!  Now, if this is not yet visible to the
+                    // user, then just add it without starting; it will
+                    // get started when the user navigates back to it.
+                    if (!startIt) {
+                        if (DEBUG_ADD_REMOVE) Slog.i(TAG, &quot;Adding activity &quot; + r + &quot; to task &quot;
+                                + task, new RuntimeException(&quot;here&quot;).fillInStackTrace());
+                        task.addActivityToTop(r);
+                        r.putInHistory();
+                        mWindowManager.addAppToken(task.mActivities.indexOf(r), r.appToken,
+                                r.task.taskId, mStackId, r.info.screenOrientation, r.fullscreen,
+                                (r.info.flags &amp; ActivityInfo.FLAG_SHOW_FOR_ALL_USERS) != 0,
+                                r.userId, r.info.configChanges, task.voiceSession != null,
+                                r.mLaunchTaskBehind);
+                        if (VALIDATE_TOKENS) {
+                            validateAppTokensLocked();
+                        }
+                        ActivityOptions.abort(options);
+                        return;
+                    }
+                    break;
+                } else if (task.numFullscreen &gt; 0) {
+                    startIt = false;
+                }
+            }
+        }
+
+        // Place a new activity at top of stack, so it is next to interact
+        // with the user.
+        //把新的activity放在栈顶，成为下一个和用户交互的activity
+
+        // If we are not placing the new activity frontmost, we do not want
+        // to deliver the onUserLeaving callback to the actual frontmost
+        // activity
+        //如果不把新的activity放在最前面，就不会执行现在最前面的activity的onUserLeaving回调
+
+        if (task == r.task &amp;&amp; mTaskHistory.indexOf(task) != (mTaskHistory.size() - 1)) {
+            mStackSupervisor.mUserLeaving = false;
+            if (DEBUG_USER_LEAVING) Slog.v(TAG_USER_LEAVING,
+                    &quot;startActivity() behind front, mUserLeaving=false&quot;);
+        }
+
+        task = r.task;
+
+        // Slot the activity into the history stack and proceed
+        //将activity放入历史堆栈中并继续进行
+        if (DEBUG_ADD_REMOVE) Slog.i(TAG, &quot;Adding activity &quot; + r + &quot; to stack to task &quot; + task,
+                new RuntimeException(&quot;here&quot;).fillInStackTrace());
+        task.addActivityToTop(r);
+        task.setFrontOfTask();
+
+        r.putInHistory();
+        if (!isHomeStack() || numActivities() &gt; 0) {
+            // We want to show the starting preview window if we are
+            // switching to a new task, or the next activity&apos;s process is
+            // not currently running.
+            boolean showStartingIcon = newTask;
+            ProcessRecord proc = r.app;
+            if (proc == null) {
+                proc = mService.mProcessNames.get(r.processName, r.info.applicationInfo.uid);
+            }
+            if (proc == null || proc.thread == null) {
+                showStartingIcon = true;
+            }
+            if (DEBUG_TRANSITION) Slog.v(TAG_TRANSITION,
+                    &quot;Prepare open transition: starting &quot; + r);
+            if ((r.intent.getFlags() &amp; Intent.FLAG_ACTIVITY_NO_ANIMATION) != 0) {
+                mWindowManager.prepareAppTransition(AppTransition.TRANSIT_NONE, keepCurTransition);
+                mNoAnimActivities.add(r);
+            } else {
+                mWindowManager.prepareAppTransition(newTask
+                        ? r.mLaunchTaskBehind
+                                ? AppTransition.TRANSIT_TASK_OPEN_BEHIND
+                                : AppTransition.TRANSIT_TASK_OPEN
+                        : AppTransition.TRANSIT_ACTIVITY_OPEN, keepCurTransition);
+                mNoAnimActivities.remove(r);
+            }
+            mWindowManager.addAppToken(task.mActivities.indexOf(r),
+                    r.appToken, r.task.taskId, mStackId, r.info.screenOrientation, r.fullscreen,
+                    (r.info.flags &amp; ActivityInfo.FLAG_SHOW_FOR_ALL_USERS) != 0, r.userId,
+                    r.info.configChanges, task.voiceSession != null, r.mLaunchTaskBehind);
+            boolean doShow = true;
+            if (newTask) {
+                // Even though this activity is starting fresh, we still need
+                // to reset it to make sure we apply affinities to move any
+                // existing activities from other tasks in to it.
+                // If the caller has requested that the target task be
+                // reset, then do so.
+                if ((r.intent.getFlags() &amp; Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED) != 0) {
+                    resetTaskIfNeededLocked(r, r);
+                    doShow = topRunningNonDelayedActivityLocked(null) == r;
+                }
+            } else if (options != null &amp;&amp; new ActivityOptions(options).getAnimationType()
+                    == ActivityOptions.ANIM_SCENE_TRANSITION) {
+                doShow = false;
+            }
+            if (r.mLaunchTaskBehind) {
+                // Don&apos;t do a starting window for mLaunchTaskBehind. More importantly make sure we
+                // tell WindowManager that r is visible even though it is at the back of the stack.
+                mWindowManager.setAppVisibility(r.appToken, true);
+                ensureActivitiesVisibleLocked(null, 0);
+            } else if (SHOW_APP_STARTING_PREVIEW &amp;&amp; doShow) {
+                // Figure out if we are transitioning from another activity that is
+                // &quot;has the same starting icon&quot; as the next one.  This allows the
+                // window manager to keep the previous window it had previously
+                // created, if it still had one.
+                ActivityRecord prev = mResumedActivity;
+                if (prev != null) {
+                    // We don&apos;t want to reuse the previous starting preview if:
+                    // (1) The current activity is in a different task.
+                    if (prev.task != r.task) {
+                        prev = null;
+                    }
+                    // (2) The current activity is already displayed.
+                    else if (prev.nowVisible) {
+                        prev = null;
+                    }
+                }
+                mWindowManager.setAppStartingWindow(
+                        r.appToken, r.packageName, r.theme,
+                        mService.compatibilityInfoForPackageLocked(
+                                r.info.applicationInfo), r.nonLocalizedLabel,
+                        r.labelRes, r.icon, r.logo, r.windowFlags,
+                        prev != null ? prev.appToken : null, showStartingIcon);
+                r.mStartingWindowShown = true;
+            }
+        } else {
+            // If this is the first activity, don&apos;t do any fancy animations,
+            // because there is nothing for it to animate on top of.
+            mWindowManager.addAppToken(task.mActivities.indexOf(r), r.appToken,
+                    r.task.taskId, mStackId, r.info.screenOrientation, r.fullscreen,
+                    (r.info.flags &amp; ActivityInfo.FLAG_SHOW_FOR_ALL_USERS) != 0, r.userId,
+                    r.info.configChanges, task.voiceSession != null, r.mLaunchTaskBehind);
+            ActivityOptions.abort(options);
+            options = null;
+        }
+        if (VALIDATE_TOKENS) {
+            validateAppTokensLocked();
+        }
+
+        if (doResume) {
+            mStackSupervisor.resumeTopActivitiesLocked(this, r, options);
+        }
+    }
+</code></pre><p>重点mStackSupervisor.resumeTopActivitiesLocked(this, r, options);</p>
+<p>###转到ActivityStackSupervisor-resumeTopActivitiesLocked  </p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2018/01/18/ActivityStack-startActivityLocked/" data-id="cjck3quqa0005c5s6lpbnw2ci" class="article-share-link">Teilen</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/android-ActivityStack-startActivityLocked-ActivityStackSupervisor-resumeTopActivitiesLocked/">android ActivityStack-startActivityLocked ActivityStackSupervisor-resumeTopActivitiesLocked</a></li></ul>
 
     </footer>
   </div>
@@ -179,6 +2389,11 @@ Activity-performCreate()
 
   
 
+
+  <nav id="page-nav">
+    
+    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><a class="extend next" rel="next" href="/page/2/">weiter &raquo;</a>
+  </nav>
 
 </section>
         
@@ -191,7 +2406,7 @@ Activity-performCreate()
   <div class="widget-wrap">
     <h3 class="widget-title">Tags</h3>
     <div class="widget">
-      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/android/">android</a></li></ul>
+      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/android/">android</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/android-ActivityManagerNative-getDefault/">android ActivityManagerNative-getDefault</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/android-ActivityManagerNative-getDefault-ActivityManagerService-startActivity/">android ActivityManagerNative-getDefault ActivityManagerService-startActivity</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/android-ActivityManagerService-attachApplication-ActivityStackSupervisor-attachApplicationLocked/">android ActivityManagerService-attachApplication ActivityStackSupervisor-attachApplicationLocked</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/android-ActivityManagerService-startActivity-ActivityStarter-startActivityMayWait-ActivityStackSupervisor-startActivityMayWait/">android ActivityManagerService-startActivity ActivityStarter-startActivityMayWait ActivityStackSupervisor-startActivityMayWait</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/android-ActivityManagerService-startProcessLocked-Process-start/">android ActivityManagerService-startProcessLocked Process-start</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/android-ActivityStack-resumeTopActivityLocked-ActivityStackSupervisor-startSpecificActivityLocked/">android ActivityStack-resumeTopActivityLocked ActivityStackSupervisor-startSpecificActivityLocked</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/android-ActivityStack-startActivityLocked-ActivityStackSupervisor-resumeTopActivitiesLocked/">android ActivityStack-startActivityLocked ActivityStackSupervisor-resumeTopActivitiesLocked</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/android-ActivityStackSupervisor-attachApplicationLocked-ActivityThread-scheduleLaunchActivity/">android ActivityStackSupervisor-attachApplicationLocked ActivityThread-scheduleLaunchActivity</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/android-ActivityStackSupervisor-resumeTopActivitiesLocked-ActivityStack-resumeTopActivityLocked/">android ActivityStackSupervisor-resumeTopActivitiesLocked ActivityStack-resumeTopActivityLocked</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/android-ActivityStackSupervisor-startActivityMayWait-ActivityStack-startActivityLocked/">android ActivityStackSupervisor-startActivityMayWait ActivityStack-startActivityLocked</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/android-ActivityStackSupervisor-startSpecificActivityLocked-ActivityManagerService-startProcessLocked/">android ActivityStackSupervisor-startSpecificActivityLocked ActivityManagerService-startProcessLocked</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/android-ActivityStarter-startActivityMayWait/">android ActivityStarter-startActivityMayWait</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/android-ActivityThread-main-ActivityManagerService-attachApplication/">android ActivityThread-main ActivityManagerService-attachApplication</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/android-ActivityThread-scheduleLaunchActivity/">android ActivityThread-scheduleLaunchActivity</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/android-Process-start-ActivityThread-main/">android Process-start ActivityThread-main</a></li></ul>
     </div>
   </div>
 
@@ -201,7 +2416,7 @@ Activity-performCreate()
   <div class="widget-wrap">
     <h3 class="widget-title">Tag Cloud</h3>
     <div class="widget tagcloud">
-      <a href="/tags/android/" style="font-size: 10px;">android</a>
+      <a href="/tags/android/" style="font-size: 10px;">android</a> <a href="/tags/android-ActivityManagerNative-getDefault/" style="font-size: 10px;">android ActivityManagerNative-getDefault</a> <a href="/tags/android-ActivityManagerNative-getDefault-ActivityManagerService-startActivity/" style="font-size: 10px;">android ActivityManagerNative-getDefault ActivityManagerService-startActivity</a> <a href="/tags/android-ActivityManagerService-attachApplication-ActivityStackSupervisor-attachApplicationLocked/" style="font-size: 10px;">android ActivityManagerService-attachApplication ActivityStackSupervisor-attachApplicationLocked</a> <a href="/tags/android-ActivityManagerService-startActivity-ActivityStarter-startActivityMayWait-ActivityStackSupervisor-startActivityMayWait/" style="font-size: 10px;">android ActivityManagerService-startActivity ActivityStarter-startActivityMayWait ActivityStackSupervisor-startActivityMayWait</a> <a href="/tags/android-ActivityManagerService-startProcessLocked-Process-start/" style="font-size: 10px;">android ActivityManagerService-startProcessLocked Process-start</a> <a href="/tags/android-ActivityStack-resumeTopActivityLocked-ActivityStackSupervisor-startSpecificActivityLocked/" style="font-size: 10px;">android ActivityStack-resumeTopActivityLocked ActivityStackSupervisor-startSpecificActivityLocked</a> <a href="/tags/android-ActivityStack-startActivityLocked-ActivityStackSupervisor-resumeTopActivitiesLocked/" style="font-size: 10px;">android ActivityStack-startActivityLocked ActivityStackSupervisor-resumeTopActivitiesLocked</a> <a href="/tags/android-ActivityStackSupervisor-attachApplicationLocked-ActivityThread-scheduleLaunchActivity/" style="font-size: 10px;">android ActivityStackSupervisor-attachApplicationLocked ActivityThread-scheduleLaunchActivity</a> <a href="/tags/android-ActivityStackSupervisor-resumeTopActivitiesLocked-ActivityStack-resumeTopActivityLocked/" style="font-size: 10px;">android ActivityStackSupervisor-resumeTopActivitiesLocked ActivityStack-resumeTopActivityLocked</a> <a href="/tags/android-ActivityStackSupervisor-startActivityMayWait-ActivityStack-startActivityLocked/" style="font-size: 10px;">android ActivityStackSupervisor-startActivityMayWait ActivityStack-startActivityLocked</a> <a href="/tags/android-ActivityStackSupervisor-startSpecificActivityLocked-ActivityManagerService-startProcessLocked/" style="font-size: 10px;">android ActivityStackSupervisor-startSpecificActivityLocked ActivityManagerService-startProcessLocked</a> <a href="/tags/android-ActivityStarter-startActivityMayWait/" style="font-size: 10px;">android ActivityStarter-startActivityMayWait</a> <a href="/tags/android-ActivityThread-main-ActivityManagerService-attachApplication/" style="font-size: 10px;">android ActivityThread-main ActivityManagerService-attachApplication</a> <a href="/tags/android-ActivityThread-scheduleLaunchActivity/" style="font-size: 10px;">android ActivityThread-scheduleLaunchActivity</a> <a href="/tags/android-Process-start-ActivityThread-main/" style="font-size: 10px;">android Process-start ActivityThread-main</a>
     </div>
   </div>
 
@@ -223,11 +2438,23 @@ Activity-performCreate()
       <ul>
         
           <li>
-            <a href="/2018/01/17/hello-world/">Hello World</a>
+            <a href="/2018/01/18/ActivityThread-scheduleLaunchActivity/">ActivityThread-scheduleLaunchActivity </a>
           </li>
         
           <li>
-            <a href="/2018/01/16/activity启动/">activity启动</a>
+            <a href="/2018/01/18/ActivityStackSupervisor-attachApplicationLocked/">ActivityStackSupervisor-attachApplicationLocked</a>
+          </li>
+        
+          <li>
+            <a href="/2018/01/18/ActivityManagerService-attachApplication/">ActivityManagerService-attachApplication</a>
+          </li>
+        
+          <li>
+            <a href="/2018/01/18/ActivityThread-main/">ActivityThread-main</a>
+          </li>
+        
+          <li>
+            <a href="/2018/01/18/Process-start/">Process-start</a>
           </li>
         
       </ul>

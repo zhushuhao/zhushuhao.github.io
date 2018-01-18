@@ -5,17 +5,19 @@
   
 
   
-  <title>Archiv | 生死如风，常伴吾身</title>
+  <title>ActivityStackSupervisor-startSpecificActivityLocked | 生死如风，常伴吾身</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="个人小站">
-<meta property="og:type" content="website">
-<meta property="og:title" content="生死如风，常伴吾身">
-<meta property="og:url" content="http://yoursite.com/archives/index.html">
+  <meta name="description" content="###源码位置com.android.server.am.ActivityStackSupervisor.java 查看startSpecificActivityLocked方法 void startSpecificActivityLocked(ActivityRecord r,         boolean andResume, boolean checkConfig) {     // Is">
+<meta name="keywords" content="android ActivityStackSupervisor-startSpecificActivityLocked ActivityManagerService-startProcessLocked">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ActivityStackSupervisor-startSpecificActivityLocked">
+<meta property="og:url" content="http://yoursite.com/2018/01/18/ActivityStackSupervisor-startSpecificActivityLocked/index.html">
 <meta property="og:site_name" content="生死如风，常伴吾身">
-<meta property="og:description" content="个人小站">
+<meta property="og:description" content="###源码位置com.android.server.am.ActivityStackSupervisor.java 查看startSpecificActivityLocked方法 void startSpecificActivityLocked(ActivityRecord r,         boolean andResume, boolean checkConfig) {     // Is">
+<meta property="og:updated_time" content="2018-01-18T03:57:08.868Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="生死如风，常伴吾身">
-<meta name="twitter:description" content="个人小站">
+<meta name="twitter:title" content="ActivityStackSupervisor-startSpecificActivityLocked">
+<meta name="twitter:description" content="###源码位置com.android.server.am.ActivityStackSupervisor.java 查看startSpecificActivityLocked方法 void startSpecificActivityLocked(ActivityRecord r,         boolean andResume, boolean checkConfig) {     // Is">
   
     <link rel="alternate" href="/atom.xml" title="生死如风，常伴吾身" type="application/atom+xml">
   
@@ -62,216 +64,98 @@
   </div>
 </header>
       <div class="outer">
-        <section id="main">
-  
-  
-    
-    
-      
-      
-      <section class="archives-wrap">
-        <div class="archive-year-wrap">
-          <a href="/archives/2018" class="archive-year">2018</a>
-        </div>
-        <div class="archives">
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2018/01/18/ActivityThread-scheduleLaunchActivity/" class="archive-article-date">
-  <time datetime="2018-01-18T04:32:47.000Z" itemprop="datePublished">Jan 18</time>
+        <section id="main"><article id="post-ActivityStackSupervisor-startSpecificActivityLocked" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2018/01/18/ActivityStackSupervisor-startSpecificActivityLocked/" class="article-date">
+  <time datetime="2018-01-18T03:53:39.000Z" itemprop="datePublished">2018-01-18</time>
 </a>
-      
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
   
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2018/01/18/ActivityThread-scheduleLaunchActivity/">ActivityThread-scheduleLaunchActivity </a>
+    <h1 class="article-title" itemprop="name">
+      ActivityStackSupervisor-startSpecificActivityLocked
     </h1>
   
 
-    </header>
-  </div>
-</article>
-  
+      </header>
     
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2018/01/18/ActivityStackSupervisor-attachApplicationLocked/" class="archive-article-date">
-  <time datetime="2018-01-18T04:28:01.000Z" itemprop="datePublished">Jan 18</time>
-</a>
+    <div class="article-entry" itemprop="articleBody">
       
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2018/01/18/ActivityStackSupervisor-attachApplicationLocked/">ActivityStackSupervisor-attachApplicationLocked</a>
-    </h1>
-  
+        <p>###源码位置com.android.server.am.ActivityStackSupervisor.java</p>
+<p>查看startSpecificActivityLocked方法</p>
+<pre><code>void startSpecificActivityLocked(ActivityRecord r,
+        boolean andResume, boolean checkConfig) {
+    // Is this activity&apos;s application already running?
+    ProcessRecord app = mService.getProcessRecordLocked(r.processName,
+            r.info.applicationInfo.uid, true);
 
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2018/01/18/ActivityManagerService-attachApplication/" class="archive-article-date">
-  <time datetime="2018-01-18T04:19:02.000Z" itemprop="datePublished">Jan 18</time>
-</a>
+    r.task.stack.setLaunchTime(r);
+
+    if (app != null &amp;&amp; app.thread != null) {
+        try {
+            if ((r.info.flags&amp;ActivityInfo.FLAG_MULTIPROCESS) == 0
+                    || !&quot;android&quot;.equals(r.info.packageName)) {
+                // Don&apos;t add this if it is a platform component that is marked
+                // to run in multiple processes, because this is actually
+                // part of the framework so doesn&apos;t make sense to track as a
+                // separate apk in the process.
+                app.addPackage(r.info.packageName, r.info.applicationInfo.versionCode,
+                        mService.mProcessStats);
+            }
+            realStartActivityLocked(r, app, andResume, checkConfig);
+            return;
+        } catch (RemoteException e) {
+            Slog.w(TAG, &quot;Exception when starting activity &quot;
+                    + r.intent.getComponent().flattenToShortString(), e);
+        }
+
+        // If a dead object exception was thrown -- fall through to
+        // restart the application.
+    }
+
+    mService.startProcessLocked(r.processName, r.info.applicationInfo, true, 0,
+            &quot;activity&quot;, r.intent.getComponent(), false, false, true);
+}
+</code></pre><p>###转到ActivityManagerService-startProcessLocked</p>
+
       
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2018/01/18/ActivityManagerService-attachApplication/">ActivityManagerService-attachApplication</a>
-    </h1>
-  
-
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2018/01/18/ActivityThread-main/" class="archive-article-date">
-  <time datetime="2018-01-18T04:10:59.000Z" itemprop="datePublished">Jan 18</time>
-</a>
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2018/01/18/ActivityStackSupervisor-startSpecificActivityLocked/" data-id="cjck3quqi000dc5s6wslqke7o" class="article-share-link">Teilen</a>
       
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2018/01/18/ActivityThread-main/">ActivityThread-main</a>
-    </h1>
-  
-
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2018/01/18/Process-start/" class="archive-article-date">
-  <time datetime="2018-01-18T04:03:13.000Z" itemprop="datePublished">Jan 18</time>
-</a>
       
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2018/01/18/Process-start/">Process-start</a>
-    </h1>
-  
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/android-ActivityStackSupervisor-startSpecificActivityLocked-ActivityManagerService-startProcessLocked/">android ActivityStackSupervisor-startSpecificActivityLocked ActivityManagerService-startProcessLocked</a></li></ul>
 
-    </header>
+    </footer>
   </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2018/01/18/ActivityManagerService-startProcessLocked/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Neuer</strong>
+      <div class="article-nav-title">
+        
+          ActivityManagerService-startProcessLocked
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2018/01/18/ActivityStack-resumeTopActivityLocked/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Älter</strong>
+      <div class="article-nav-title">ActivityStack-resumeTopActivityLocked</div>
+    </a>
+  
+</nav>
+
+  
 </article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2018/01/18/ActivityManagerService-startProcessLocked/" class="archive-article-date">
-  <time datetime="2018-01-18T03:57:19.000Z" itemprop="datePublished">Jan 18</time>
-</a>
-      
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2018/01/18/ActivityManagerService-startProcessLocked/">ActivityManagerService-startProcessLocked</a>
-    </h1>
-  
-
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2018/01/18/ActivityStackSupervisor-startSpecificActivityLocked/" class="archive-article-date">
-  <time datetime="2018-01-18T03:53:39.000Z" itemprop="datePublished">Jan 18</time>
-</a>
-      
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2018/01/18/ActivityStackSupervisor-startSpecificActivityLocked/">ActivityStackSupervisor-startSpecificActivityLocked</a>
-    </h1>
-  
-
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2018/01/18/ActivityStack-resumeTopActivityLocked/" class="archive-article-date">
-  <time datetime="2018-01-18T03:48:33.000Z" itemprop="datePublished">Jan 18</time>
-</a>
-      
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2018/01/18/ActivityStack-resumeTopActivityLocked/">ActivityStack-resumeTopActivityLocked</a>
-    </h1>
-  
-
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2018/01/18/ActivityStackSupervisor-resumeTopActivitiesLocked/" class="archive-article-date">
-  <time datetime="2018-01-18T03:44:56.000Z" itemprop="datePublished">Jan 18</time>
-</a>
-      
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2018/01/18/ActivityStackSupervisor-resumeTopActivitiesLocked/">ActivityStackSupervisor-resumeTopActivitiesLocked</a>
-    </h1>
-  
-
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2018/01/18/ActivityStack-startActivityLocked/" class="archive-article-date">
-  <time datetime="2018-01-18T03:35:02.000Z" itemprop="datePublished">Jan 18</time>
-</a>
-      
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2018/01/18/ActivityStack-startActivityLocked/">ActivityStack-startActivityLocked</a>
-    </h1>
-  
-
-    </header>
-  </div>
-</article>
-  
-  
-    </div></section>
-  
-
-
-  <nav id="page-nav">
-    
-    <span class="page-number current">1</span><a class="page-number" href="/archives/page/2/">2</a><a class="extend next" rel="next" href="/archives/page/2/">weiter &raquo;</a>
-  </nav>
 
 </section>
         

@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+
+  
+  <title>Process-start | 生死如风，常伴吾身</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="###源码位置android.os.Process /** * Tools for managing OS processes. 管理操作系统进程的工具 */ public class Process {} 不继承类，不实现接口  查看start方法 /**     * Start a new process.     *      * &amp;lt;p&amp;gt;If processes are enab">
+<meta name="keywords" content="android Process-start ActivityThread-main">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Process-start">
+<meta property="og:url" content="http://yoursite.com/2018/01/18/Process-start/index.html">
+<meta property="og:site_name" content="生死如风，常伴吾身">
+<meta property="og:description" content="###源码位置android.os.Process /** * Tools for managing OS processes. 管理操作系统进程的工具 */ public class Process {} 不继承类，不实现接口  查看start方法 /**     * Start a new process.     *      * &amp;lt;p&amp;gt;If processes are enab">
+<meta property="og:updated_time" content="2018-01-18T04:10:43.179Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Process-start">
+<meta name="twitter:description" content="###源码位置android.os.Process /** * Tools for managing OS processes. 管理操作系统进程的工具 */ public class Process {} 不继承类，不实现接口  查看start方法 /**     * Start a new process.     *      * &amp;lt;p&amp;gt;If processes are enab">
+  
+    <link rel="alternate" href="/atom.xml" title="生死如风，常伴吾身" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">生死如风，常伴吾身</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Suche"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://yoursite.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-Process-start" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2018/01/18/Process-start/" class="article-date">
+  <time datetime="2018-01-18T04:03:13.000Z" itemprop="datePublished">2018-01-18</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      Process-start
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>###源码位置android.os.Process</p>
+<pre><code>/**
+* Tools for managing OS processes.
+管理操作系统进程的工具
+*/
+public class Process {}
+不继承类，不实现接口
+</code></pre><p> 查看start方法</p>
+<pre><code>/**
+    * Start a new process.
+    * 
+    * &lt;p&gt;If processes are enabled, a new process is created and the
+    * static main() function of a &lt;var&gt;processClass&lt;/var&gt; is executed there.
+    * The process will continue running after this function returns.
+    * 
+    * &lt;p&gt;If processes are not enabled, a new thread in the caller&apos;s
+    * process is created and main() of &lt;var&gt;processClass&lt;/var&gt; called there.
+    * 
+    * &lt;p&gt;The niceName parameter, if not an empty string, is a custom name to
+    * give to the process instead of using processClass.  This allows you to
+    * make easily identifyable processes even if you are using the same base
+    * &lt;var&gt;processClass&lt;/var&gt; to start them.
+    * 
+    * @param processClass The class to use as the process&apos;s main entry
+    *                     point.
+    * @param niceName A more readable name to use for the process.
+    * @param uid The user-id under which the process will run.
+    * @param gid The group-id under which the process will run.
+    * @param gids Additional group-ids associated with the process.
+    * @param debugFlags Additional flags.
+    * @param targetSdkVersion The target SDK version for the app.
+    * @param seInfo null-ok SELinux information for the new process.
+    * @param abi non-null the ABI this app should be started with.
+    * @param instructionSet null-ok the instruction set to use.
+    * @param appDataDir null-ok the data directory of the app.
+    * @param zygoteArgs Additional arguments to supply to the zygote process.
+    * 
+    * @return An object that describes the result of the attempt to start the process.
+    * @throws RuntimeException on fatal start failure
+    * 
+    * {@hide}
+    */
+   public static final ProcessStartResult start(final String processClass,
+                                 final String niceName,
+                                 int uid, int gid, int[] gids,
+                                 int debugFlags, int mountExternal,
+                                 int targetSdkVersion,
+                                 String seInfo,
+                                 String abi,
+                                 String instructionSet,
+                                 String appDataDir,
+                                 String[] zygoteArgs) {
+       try {
+           return startViaZygote(processClass, niceName, uid, gid, gids,
+                   debugFlags, mountExternal, targetSdkVersion, seInfo,
+                   abi, instructionSet, appDataDir, zygoteArgs);
+       } catch (ZygoteStartFailedEx ex) {
+           Log.e(LOG_TAG,
+                   &quot;Starting VM process through Zygote failed&quot;);
+           throw new RuntimeException(
+                   &quot;Starting VM process through Zygote failed&quot;, ex);
+       }
+   }
+</code></pre><p>转到startViaZygote方法</p>
+<pre><code>/**
+     * Starts a new process via the zygote mechanism.
+     *
+     * @param processClass Class name whose static main() to run
+     * @param niceName &apos;nice&apos; process name to appear in ps
+     * @param uid a POSIX uid that the new process should setuid() to
+     * @param gid a POSIX gid that the new process shuold setgid() to
+     * @param gids null-ok; a list of supplementary group IDs that the
+     * new process should setgroup() to.
+     * @param debugFlags Additional flags.
+     * @param targetSdkVersion The target SDK version for the app.
+     * @param seInfo null-ok SELinux information for the new process.
+     * @param abi the ABI the process should use.
+     * @param instructionSet null-ok the instruction set to use.
+     * @param appDataDir null-ok the data directory of the app.
+     * @param extraArgs Additional arguments to supply to the zygote process.
+     * @return An object that describes the result of the attempt to start the process.
+     * @throws ZygoteStartFailedEx if process start failed for any reason
+     */
+    private static ProcessStartResult startViaZygote(final String processClass,
+                                  final String niceName,
+                                  final int uid, final int gid,
+                                  final int[] gids,
+                                  int debugFlags, int mountExternal,
+                                  int targetSdkVersion,
+                                  String seInfo,
+                                  String abi,
+                                  String instructionSet,
+                                  String appDataDir,
+                                  String[] extraArgs)
+                                  throws ZygoteStartFailedEx {
+        synchronized(Process.class) {
+            ArrayList&lt;String&gt; argsForZygote = new ArrayList&lt;String&gt;();
+
+            // --runtime-args, --setuid=, --setgid=,
+            // and --setgroups= must go first
+            argsForZygote.add(&quot;--runtime-args&quot;);
+            argsForZygote.add(&quot;--setuid=&quot; + uid);
+            argsForZygote.add(&quot;--setgid=&quot; + gid);
+            if ((debugFlags &amp; Zygote.DEBUG_ENABLE_JNI_LOGGING) != 0) {
+                argsForZygote.add(&quot;--enable-jni-logging&quot;);
+            }
+            if ((debugFlags &amp; Zygote.DEBUG_ENABLE_SAFEMODE) != 0) {
+                argsForZygote.add(&quot;--enable-safemode&quot;);
+            }
+            if ((debugFlags &amp; Zygote.DEBUG_ENABLE_DEBUGGER) != 0) {
+                argsForZygote.add(&quot;--enable-debugger&quot;);
+            }
+            if ((debugFlags &amp; Zygote.DEBUG_ENABLE_CHECKJNI) != 0) {
+                argsForZygote.add(&quot;--enable-checkjni&quot;);
+            }
+            if ((debugFlags &amp; Zygote.DEBUG_ENABLE_JIT) != 0) {
+                argsForZygote.add(&quot;--enable-jit&quot;);
+            }
+            if ((debugFlags &amp; Zygote.DEBUG_GENERATE_DEBUG_INFO) != 0) {
+                argsForZygote.add(&quot;--generate-debug-info&quot;);
+            }
+            if ((debugFlags &amp; Zygote.DEBUG_ENABLE_ASSERT) != 0) {
+                argsForZygote.add(&quot;--enable-assert&quot;);
+            }
+            if (mountExternal == Zygote.MOUNT_EXTERNAL_DEFAULT) {
+                argsForZygote.add(&quot;--mount-external-default&quot;);
+            } else if (mountExternal == Zygote.MOUNT_EXTERNAL_READ) {
+                argsForZygote.add(&quot;--mount-external-read&quot;);
+            } else if (mountExternal == Zygote.MOUNT_EXTERNAL_WRITE) {
+                argsForZygote.add(&quot;--mount-external-write&quot;);
+            }
+            argsForZygote.add(&quot;--target-sdk-version=&quot; + targetSdkVersion);
+
+            //TODO optionally enable debuger
+            //argsForZygote.add(&quot;--enable-debugger&quot;);
+
+            // --setgroups is a comma-separated list
+            if (gids != null &amp;&amp; gids.length &gt; 0) {
+                StringBuilder sb = new StringBuilder();
+                sb.append(&quot;--setgroups=&quot;);
+
+                int sz = gids.length;
+                for (int i = 0; i &lt; sz; i++) {
+                    if (i != 0) {
+                        sb.append(&apos;,&apos;);
+                    }
+                    sb.append(gids[i]);
+                }
+
+                argsForZygote.add(sb.toString());
+            }
+
+            if (niceName != null) {
+                argsForZygote.add(&quot;--nice-name=&quot; + niceName);
+            }
+
+            if (seInfo != null) {
+                argsForZygote.add(&quot;--seinfo=&quot; + seInfo);
+            }
+
+            if (instructionSet != null) {
+                argsForZygote.add(&quot;--instruction-set=&quot; + instructionSet);
+            }
+
+            if (appDataDir != null) {
+                argsForZygote.add(&quot;--app-data-dir=&quot; + appDataDir);
+            }
+
+            argsForZygote.add(processClass);
+
+            if (extraArgs != null) {
+                for (String arg : extraArgs) {
+                    argsForZygote.add(arg);
+                }
+            }
+
+            return zygoteSendArgsAndGetResult(openZygoteSocketIfNeeded(abi), argsForZygote);
+        }
+    }
+</code></pre><p>转到zygoteSendArgsAndGetResult</p>
+<pre><code>/**
+     * Sends an argument list to the zygote process, which starts a new child
+     * and returns the child&apos;s pid. Please note: the present implementation
+     * replaces newlines in the argument list with spaces.
+     *
+     * @throws ZygoteStartFailedEx if process start failed for any reason
+     */
+    private static ProcessStartResult zygoteSendArgsAndGetResult(
+            ZygoteState zygoteState, ArrayList&lt;String&gt; args)
+            throws ZygoteStartFailedEx {
+        try {
+            /**
+             * See com.android.internal.os.ZygoteInit.readArgumentList()
+             * Presently the wire format to the zygote process is:
+             * a) a count of arguments (argc, in essence)
+             * b) a number of newline-separated argument strings equal to count
+             *
+             * After the zygote process reads these it will write the pid of
+             * the child or -1 on failure, followed by boolean to
+             * indicate whether a wrapper process was used.
+             */
+            final BufferedWriter writer = zygoteState.writer;
+            final DataInputStream inputStream = zygoteState.inputStream;
+
+            writer.write(Integer.toString(args.size()));
+            writer.newLine();
+
+            int sz = args.size();
+            for (int i = 0; i &lt; sz; i++) {
+                String arg = args.get(i);
+                if (arg.indexOf(&apos;\n&apos;) &gt;= 0) {
+                    throw new ZygoteStartFailedEx(
+                            &quot;embedded newlines not allowed&quot;);
+                }
+                writer.write(arg);
+                writer.newLine();
+            }
+
+            writer.flush();
+
+            // Should there be a timeout on this?
+            ProcessStartResult result = new ProcessStartResult();
+            result.pid = inputStream.readInt();
+            if (result.pid &lt; 0) {
+                throw new ZygoteStartFailedEx(&quot;fork() failed&quot;);
+            }
+            result.usingWrapper = inputStream.readBoolean();
+            return result;
+        } catch (IOException ex) {
+            zygoteState.close();
+            throw new ZygoteStartFailedEx(ex);
+        }
+    }
+</code></pre><p> ####通过Zygote孵化了一个ActivityThread,去查看ActivityThread的main方法,转到ActivityThread-main</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2018/01/18/Process-start/" data-id="cjck3qur2000qc5s68j77xyn7" class="article-share-link">Teilen</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/android-Process-start-ActivityThread-main/">android Process-start ActivityThread-main</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2018/01/18/ActivityThread-main/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Neuer</strong>
+      <div class="article-nav-title">
+        
+          ActivityThread-main
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2018/01/18/ActivityManagerService-startProcessLocked/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Älter</strong>
+      <div class="article-nav-title">ActivityManagerService-startProcessLocked</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tags</h3>
+    <div class="widget">
+      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/android/">android</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/android-ActivityManagerNative-getDefault/">android ActivityManagerNative-getDefault</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/android-ActivityManagerNative-getDefault-ActivityManagerService-startActivity/">android ActivityManagerNative-getDefault ActivityManagerService-startActivity</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/android-ActivityManagerService-attachApplication-ActivityStackSupervisor-attachApplicationLocked/">android ActivityManagerService-attachApplication ActivityStackSupervisor-attachApplicationLocked</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/android-ActivityManagerService-startActivity-ActivityStarter-startActivityMayWait-ActivityStackSupervisor-startActivityMayWait/">android ActivityManagerService-startActivity ActivityStarter-startActivityMayWait ActivityStackSupervisor-startActivityMayWait</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/android-ActivityManagerService-startProcessLocked-Process-start/">android ActivityManagerService-startProcessLocked Process-start</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/android-ActivityStack-resumeTopActivityLocked-ActivityStackSupervisor-startSpecificActivityLocked/">android ActivityStack-resumeTopActivityLocked ActivityStackSupervisor-startSpecificActivityLocked</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/android-ActivityStack-startActivityLocked-ActivityStackSupervisor-resumeTopActivitiesLocked/">android ActivityStack-startActivityLocked ActivityStackSupervisor-resumeTopActivitiesLocked</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/android-ActivityStackSupervisor-attachApplicationLocked-ActivityThread-scheduleLaunchActivity/">android ActivityStackSupervisor-attachApplicationLocked ActivityThread-scheduleLaunchActivity</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/android-ActivityStackSupervisor-resumeTopActivitiesLocked-ActivityStack-resumeTopActivityLocked/">android ActivityStackSupervisor-resumeTopActivitiesLocked ActivityStack-resumeTopActivityLocked</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/android-ActivityStackSupervisor-startActivityMayWait-ActivityStack-startActivityLocked/">android ActivityStackSupervisor-startActivityMayWait ActivityStack-startActivityLocked</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/android-ActivityStackSupervisor-startSpecificActivityLocked-ActivityManagerService-startProcessLocked/">android ActivityStackSupervisor-startSpecificActivityLocked ActivityManagerService-startProcessLocked</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/android-ActivityStarter-startActivityMayWait/">android ActivityStarter-startActivityMayWait</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/android-ActivityThread-main-ActivityManagerService-attachApplication/">android ActivityThread-main ActivityManagerService-attachApplication</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/android-ActivityThread-scheduleLaunchActivity/">android ActivityThread-scheduleLaunchActivity</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/android-Process-start-ActivityThread-main/">android Process-start ActivityThread-main</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/android/" style="font-size: 10px;">android</a> <a href="/tags/android-ActivityManagerNative-getDefault/" style="font-size: 10px;">android ActivityManagerNative-getDefault</a> <a href="/tags/android-ActivityManagerNative-getDefault-ActivityManagerService-startActivity/" style="font-size: 10px;">android ActivityManagerNative-getDefault ActivityManagerService-startActivity</a> <a href="/tags/android-ActivityManagerService-attachApplication-ActivityStackSupervisor-attachApplicationLocked/" style="font-size: 10px;">android ActivityManagerService-attachApplication ActivityStackSupervisor-attachApplicationLocked</a> <a href="/tags/android-ActivityManagerService-startActivity-ActivityStarter-startActivityMayWait-ActivityStackSupervisor-startActivityMayWait/" style="font-size: 10px;">android ActivityManagerService-startActivity ActivityStarter-startActivityMayWait ActivityStackSupervisor-startActivityMayWait</a> <a href="/tags/android-ActivityManagerService-startProcessLocked-Process-start/" style="font-size: 10px;">android ActivityManagerService-startProcessLocked Process-start</a> <a href="/tags/android-ActivityStack-resumeTopActivityLocked-ActivityStackSupervisor-startSpecificActivityLocked/" style="font-size: 10px;">android ActivityStack-resumeTopActivityLocked ActivityStackSupervisor-startSpecificActivityLocked</a> <a href="/tags/android-ActivityStack-startActivityLocked-ActivityStackSupervisor-resumeTopActivitiesLocked/" style="font-size: 10px;">android ActivityStack-startActivityLocked ActivityStackSupervisor-resumeTopActivitiesLocked</a> <a href="/tags/android-ActivityStackSupervisor-attachApplicationLocked-ActivityThread-scheduleLaunchActivity/" style="font-size: 10px;">android ActivityStackSupervisor-attachApplicationLocked ActivityThread-scheduleLaunchActivity</a> <a href="/tags/android-ActivityStackSupervisor-resumeTopActivitiesLocked-ActivityStack-resumeTopActivityLocked/" style="font-size: 10px;">android ActivityStackSupervisor-resumeTopActivitiesLocked ActivityStack-resumeTopActivityLocked</a> <a href="/tags/android-ActivityStackSupervisor-startActivityMayWait-ActivityStack-startActivityLocked/" style="font-size: 10px;">android ActivityStackSupervisor-startActivityMayWait ActivityStack-startActivityLocked</a> <a href="/tags/android-ActivityStackSupervisor-startSpecificActivityLocked-ActivityManagerService-startProcessLocked/" style="font-size: 10px;">android ActivityStackSupervisor-startSpecificActivityLocked ActivityManagerService-startProcessLocked</a> <a href="/tags/android-ActivityStarter-startActivityMayWait/" style="font-size: 10px;">android ActivityStarter-startActivityMayWait</a> <a href="/tags/android-ActivityThread-main-ActivityManagerService-attachApplication/" style="font-size: 10px;">android ActivityThread-main ActivityManagerService-attachApplication</a> <a href="/tags/android-ActivityThread-scheduleLaunchActivity/" style="font-size: 10px;">android ActivityThread-scheduleLaunchActivity</a> <a href="/tags/android-Process-start-ActivityThread-main/" style="font-size: 10px;">android Process-start ActivityThread-main</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archiv</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/01/">January 2018</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">letzter Beitrag</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2018/01/18/ActivityThread-scheduleLaunchActivity/">ActivityThread-scheduleLaunchActivity </a>
+          </li>
+        
+          <li>
+            <a href="/2018/01/18/ActivityStackSupervisor-attachApplicationLocked/">ActivityStackSupervisor-attachApplicationLocked</a>
+          </li>
+        
+          <li>
+            <a href="/2018/01/18/ActivityManagerService-attachApplication/">ActivityManagerService-attachApplication</a>
+          </li>
+        
+          <li>
+            <a href="/2018/01/18/ActivityThread-main/">ActivityThread-main</a>
+          </li>
+        
+          <li>
+            <a href="/2018/01/18/Process-start/">Process-start</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2018 zhushuhao<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+
+
+  </div>
+</body>
+</html>

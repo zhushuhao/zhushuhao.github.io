@@ -5,17 +5,19 @@
   
 
   
-  <title>Archiv | 生死如风，常伴吾身</title>
+  <title>ActivityThread-main | 生死如风，常伴吾身</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="个人小站">
-<meta property="og:type" content="website">
-<meta property="og:title" content="生死如风，常伴吾身">
-<meta property="og:url" content="http://yoursite.com/archives/index.html">
+  <meta name="description" content="###源码位置android.app.ActivityThread /** * This manages the execution of the main thread in an * application process, scheduling and executing activities, * broadcasts, and other operations on it as the">
+<meta name="keywords" content="android ActivityThread-main ActivityManagerService-attachApplication">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ActivityThread-main">
+<meta property="og:url" content="http://yoursite.com/2018/01/18/ActivityThread-main/index.html">
 <meta property="og:site_name" content="生死如风，常伴吾身">
-<meta property="og:description" content="个人小站">
+<meta property="og:description" content="###源码位置android.app.ActivityThread /** * This manages the execution of the main thread in an * application process, scheduling and executing activities, * broadcasts, and other operations on it as the">
+<meta property="og:updated_time" content="2018-01-18T04:18:53.358Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="生死如风，常伴吾身">
-<meta name="twitter:description" content="个人小站">
+<meta name="twitter:title" content="ActivityThread-main">
+<meta name="twitter:description" content="###源码位置android.app.ActivityThread /** * This manages the execution of the main thread in an * application process, scheduling and executing activities, * broadcasts, and other operations on it as the">
   
     <link rel="alternate" href="/atom.xml" title="生死如风，常伴吾身" type="application/atom+xml">
   
@@ -62,216 +64,216 @@
   </div>
 </header>
       <div class="outer">
-        <section id="main">
-  
-  
-    
-    
-      
-      
-      <section class="archives-wrap">
-        <div class="archive-year-wrap">
-          <a href="/archives/2018" class="archive-year">2018</a>
-        </div>
-        <div class="archives">
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2018/01/18/ActivityThread-scheduleLaunchActivity/" class="archive-article-date">
-  <time datetime="2018-01-18T04:32:47.000Z" itemprop="datePublished">Jan 18</time>
+        <section id="main"><article id="post-ActivityThread-main" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2018/01/18/ActivityThread-main/" class="article-date">
+  <time datetime="2018-01-18T04:10:59.000Z" itemprop="datePublished">2018-01-18</time>
 </a>
-      
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
   
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2018/01/18/ActivityThread-scheduleLaunchActivity/">ActivityThread-scheduleLaunchActivity </a>
+    <h1 class="article-title" itemprop="name">
+      ActivityThread-main
     </h1>
   
 
-    </header>
-  </div>
-</article>
-  
+      </header>
     
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2018/01/18/ActivityStackSupervisor-attachApplicationLocked/" class="archive-article-date">
-  <time datetime="2018-01-18T04:28:01.000Z" itemprop="datePublished">Jan 18</time>
-</a>
+    <div class="article-entry" itemprop="articleBody">
       
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2018/01/18/ActivityStackSupervisor-attachApplicationLocked/">ActivityStackSupervisor-attachApplicationLocked</a>
-    </h1>
-  
+        <p>###源码位置android.app.ActivityThread</p>
+<pre><code>/**
+* This manages the execution of the main thread in an
+* application process, scheduling and executing activities,
+* broadcasts, and other operations on it as the activity
+* manager requests.
+*
+它按照 activity manager的要求管理应用程序进程中主线程的执行、调度和执行活动、广播以及其他活动
+* {@hide}
+*/
+public final class ActivityThread {}
 
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2018/01/18/ActivityManagerService-attachApplication/" class="archive-article-date">
-  <time datetime="2018-01-18T04:19:02.000Z" itemprop="datePublished">Jan 18</time>
-</a>
+不继承，不实现
+</code></pre><p> 查看main方法</p>
+<pre><code>public static void main(String[] args) {
+        Trace.traceBegin(Trace.TRACE_TAG_ACTIVITY_MANAGER, &quot;ActivityThreadMain&quot;);
+        SamplingProfilerIntegration.start();
+
+        // CloseGuard defaults to true and can be quite spammy.  We
+        // disable it here, but selectively enable it later (via
+        // StrictMode) on debug builds, but using DropBox, not logs.
+        CloseGuard.setEnabled(false);
+
+        Environment.initForCurrentUser();
+
+        // Set the reporter for event logging in libcore
+        EventLogger.setReporter(new EventLoggingReporter());
+
+        AndroidKeyStoreProvider.install();
+
+        // Make sure TrustedCertificateStore looks in the right place for CA certificates
+        final File configDir = Environment.getUserConfigDirectory(UserHandle.myUserId());
+        TrustedCertificateStore.setDefaultUserDirectory(configDir);
+
+        Process.setArgV0(&quot;&lt;pre-initialized&gt;&quot;);
+
+        Looper.prepareMainLooper();
+
+        ActivityThread thread = new ActivityThread();
+        thread.attach(false);
+
+        if (sMainThreadHandler == null) {
+            sMainThreadHandler = thread.getHandler();
+        }
+
+        if (false) {
+            Looper.myLooper().setMessageLogging(new
+                    LogPrinter(Log.DEBUG, &quot;ActivityThread&quot;));
+        }
+
+        // End of event ActivityThreadMain.
+        Trace.traceEnd(Trace.TRACE_TAG_ACTIVITY_MANAGER);
+        Looper.loop();
+
+        throw new RuntimeException(&quot;Main thread loop unexpectedly exited&quot;);
+    }
+</code></pre><p>转到attach方法</p>
+<pre><code>private void attach(boolean system) {
+        sCurrentActivityThread = this;
+        mSystemThread = system;
+        if (!system) {
+            ViewRootImpl.addFirstDrawHandler(new Runnable() {
+                @Override
+                public void run() {
+                    ensureJitEnabled();
+                }
+            });
+            android.ddm.DdmHandleAppName.setAppName(&quot;&lt;pre-initialized&gt;&quot;,
+                                                    UserHandle.myUserId());
+            RuntimeInit.setApplicationObject(mAppThread.asBinder());
+            final IActivityManager mgr = ActivityManagerNative.getDefault();
+            try {
+                mgr.attachApplication(mAppThread);
+            } catch (RemoteException ex) {
+                // Ignore
+            }
+            // Watch for getting close to heap limit.
+            BinderInternal.addGcWatcher(new Runnable() {
+                @Override public void run() {
+                    if (!mSomeActivitiesChanged) {
+                        return;
+                    }
+                    Runtime runtime = Runtime.getRuntime();
+                    long dalvikMax = runtime.maxMemory();
+                    long dalvikUsed = runtime.totalMemory() - runtime.freeMemory();
+                    if (dalvikUsed &gt; ((3*dalvikMax)/4)) {
+                        if (DEBUG_MEMORY_TRIM) Slog.d(TAG, &quot;Dalvik max=&quot; + (dalvikMax/1024)
+                                + &quot; total=&quot; + (runtime.totalMemory()/1024)
+                                + &quot; used=&quot; + (dalvikUsed/1024));
+                        mSomeActivitiesChanged = false;
+                        try {
+                            mgr.releaseSomeActivities(mAppThread);
+                        } catch (RemoteException e) {
+                        }
+                    }
+                }
+            });
+        } else {
+            // Don&apos;t set application object here -- if the system crashes,
+            // we can&apos;t display an alert, we just want to die die die.
+            android.ddm.DdmHandleAppName.setAppName(&quot;system_process&quot;,
+                    UserHandle.myUserId());
+            try {
+                mInstrumentation = new Instrumentation();
+                ContextImpl context = ContextImpl.createAppContext(
+                        this, getSystemContext().mPackageInfo);
+                mInitialApplication = context.mPackageInfo.makeApplication(true, null);
+                mInitialApplication.onCreate();
+            } catch (Exception e) {
+                throw new RuntimeException(
+                        &quot;Unable to instantiate Application():&quot; + e.toString(), e);
+            }
+        }
+
+        // add dropbox logging to libcore
+        DropBox.setReporter(new DropBoxReporter());
+
+        ViewRootImpl.addConfigCallback(new ComponentCallbacks2() {
+            @Override
+            public void onConfigurationChanged(Configuration newConfig) {
+                synchronized (mResourcesManager) {
+                    // We need to apply this change to the resources
+                    // immediately, because upon returning the view
+                    // hierarchy will be informed about it.
+                    if (mResourcesManager.applyConfigurationToResourcesLocked(newConfig, null)) {
+                        // This actually changed the resources!  Tell
+                        // everyone about it.
+                        if (mPendingConfiguration == null ||
+                                mPendingConfiguration.isOtherSeqNewer(newConfig)) {
+                            mPendingConfiguration = newConfig;
+
+                            sendMessage(H.CONFIGURATION_CHANGED, newConfig);
+                        }
+                    }
+                }
+            }
+            @Override
+            public void onLowMemory() {
+            }
+            @Override
+            public void onTrimMemory(int level) {
+            }
+        });
+    }
+</code></pre><p>重点</p>
+<pre><code>final IActivityManager mgr = ActivityManagerNative.getDefault();
+              try {
+                  mgr.attachApplication(mAppThread);
+              } catch (RemoteException ex) {
+                  // Ignore
+              }
+ 获取到ActivityManagerProxy,执行attachApplication，
+ 最终ActivityManagerService执行attachApplication
+</code></pre><p>###转到ActivityManagerService-attachApplication</p>
+
       
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2018/01/18/ActivityManagerService-attachApplication/">ActivityManagerService-attachApplication</a>
-    </h1>
-  
-
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2018/01/18/ActivityThread-main/" class="archive-article-date">
-  <time datetime="2018-01-18T04:10:59.000Z" itemprop="datePublished">Jan 18</time>
-</a>
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2018/01/18/ActivityThread-main/" data-id="cjck3quqo000hc5s6xl3ev4p9" class="article-share-link">Teilen</a>
       
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2018/01/18/ActivityThread-main/">ActivityThread-main</a>
-    </h1>
-  
-
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2018/01/18/Process-start/" class="archive-article-date">
-  <time datetime="2018-01-18T04:03:13.000Z" itemprop="datePublished">Jan 18</time>
-</a>
       
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2018/01/18/Process-start/">Process-start</a>
-    </h1>
-  
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/android-ActivityThread-main-ActivityManagerService-attachApplication/">android ActivityThread-main ActivityManagerService-attachApplication</a></li></ul>
 
-    </header>
+    </footer>
   </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2018/01/18/ActivityManagerService-attachApplication/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Neuer</strong>
+      <div class="article-nav-title">
+        
+          ActivityManagerService-attachApplication
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2018/01/18/Process-start/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Älter</strong>
+      <div class="article-nav-title">Process-start</div>
+    </a>
+  
+</nav>
+
+  
 </article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2018/01/18/ActivityManagerService-startProcessLocked/" class="archive-article-date">
-  <time datetime="2018-01-18T03:57:19.000Z" itemprop="datePublished">Jan 18</time>
-</a>
-      
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2018/01/18/ActivityManagerService-startProcessLocked/">ActivityManagerService-startProcessLocked</a>
-    </h1>
-  
-
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2018/01/18/ActivityStackSupervisor-startSpecificActivityLocked/" class="archive-article-date">
-  <time datetime="2018-01-18T03:53:39.000Z" itemprop="datePublished">Jan 18</time>
-</a>
-      
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2018/01/18/ActivityStackSupervisor-startSpecificActivityLocked/">ActivityStackSupervisor-startSpecificActivityLocked</a>
-    </h1>
-  
-
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2018/01/18/ActivityStack-resumeTopActivityLocked/" class="archive-article-date">
-  <time datetime="2018-01-18T03:48:33.000Z" itemprop="datePublished">Jan 18</time>
-</a>
-      
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2018/01/18/ActivityStack-resumeTopActivityLocked/">ActivityStack-resumeTopActivityLocked</a>
-    </h1>
-  
-
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2018/01/18/ActivityStackSupervisor-resumeTopActivitiesLocked/" class="archive-article-date">
-  <time datetime="2018-01-18T03:44:56.000Z" itemprop="datePublished">Jan 18</time>
-</a>
-      
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2018/01/18/ActivityStackSupervisor-resumeTopActivitiesLocked/">ActivityStackSupervisor-resumeTopActivitiesLocked</a>
-    </h1>
-  
-
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2018/01/18/ActivityStack-startActivityLocked/" class="archive-article-date">
-  <time datetime="2018-01-18T03:35:02.000Z" itemprop="datePublished">Jan 18</time>
-</a>
-      
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2018/01/18/ActivityStack-startActivityLocked/">ActivityStack-startActivityLocked</a>
-    </h1>
-  
-
-    </header>
-  </div>
-</article>
-  
-  
-    </div></section>
-  
-
-
-  <nav id="page-nav">
-    
-    <span class="page-number current">1</span><a class="page-number" href="/archives/page/2/">2</a><a class="extend next" rel="next" href="/archives/page/2/">weiter &raquo;</a>
-  </nav>
 
 </section>
         

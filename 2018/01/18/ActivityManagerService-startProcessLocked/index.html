@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+
+  
+  <title>ActivityManagerService-startProcessLocked | 生死如风，常伴吾身</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="###源码位置com.android.server.am.ActivityManagerService.java final ProcessRecord startProcessLocked(String processName,         ApplicationInfo info, boolean knownToBeDead, int intentFlags,         String">
+<meta name="keywords" content="android ActivityManagerService-startProcessLocked Process-start">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ActivityManagerService-startProcessLocked">
+<meta property="og:url" content="http://yoursite.com/2018/01/18/ActivityManagerService-startProcessLocked/index.html">
+<meta property="og:site_name" content="生死如风，常伴吾身">
+<meta property="og:description" content="###源码位置com.android.server.am.ActivityManagerService.java final ProcessRecord startProcessLocked(String processName,         ApplicationInfo info, boolean knownToBeDead, int intentFlags,         String">
+<meta property="og:updated_time" content="2018-01-18T04:03:03.840Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="ActivityManagerService-startProcessLocked">
+<meta name="twitter:description" content="###源码位置com.android.server.am.ActivityManagerService.java final ProcessRecord startProcessLocked(String processName,         ApplicationInfo info, boolean knownToBeDead, int intentFlags,         String">
+  
+    <link rel="alternate" href="/atom.xml" title="生死如风，常伴吾身" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">生死如风，常伴吾身</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Suche"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://yoursite.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-ActivityManagerService-startProcessLocked" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2018/01/18/ActivityManagerService-startProcessLocked/" class="article-date">
+  <time datetime="2018-01-18T03:57:19.000Z" itemprop="datePublished">2018-01-18</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      ActivityManagerService-startProcessLocked
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>###源码位置com.android.server.am.ActivityManagerService.java</p>
+<pre><code>final ProcessRecord startProcessLocked(String processName,
+        ApplicationInfo info, boolean knownToBeDead, int intentFlags,
+        String hostingType, ComponentName hostingName, boolean allowWhileBooting,
+        boolean isolated, boolean keepIfLarge) {
+    return startProcessLocked(processName, info, knownToBeDead, intentFlags, hostingType,
+            hostingName, allowWhileBooting, isolated, 0 /* isolatedUid */, keepIfLarge,
+            null /* ABI override */, null /* entryPoint */, null /* entryPointArgs */,
+            null /* crashHandler */);
+}
+</code></pre><p>接着调用startProcessLocked的重载方法</p>
+<pre><code>final ProcessRecord startProcessLocked(String processName, ApplicationInfo info,
+        boolean knownToBeDead, int intentFlags, String hostingType, ComponentName hostingName,
+        boolean allowWhileBooting, boolean isolated, int isolatedUid, boolean keepIfLarge,
+        String abiOverride, String entryPoint, String[] entryPointArgs, Runnable crashHandler) {
+    long startTime = SystemClock.elapsedRealtime();
+    ProcessRecord app;
+    if (!isolated) {
+        app = getProcessRecordLocked(processName, info.uid, keepIfLarge);
+        checkTime(startTime, &quot;startProcess: after getProcessRecord&quot;);
+
+        if ((intentFlags &amp; Intent.FLAG_FROM_BACKGROUND) != 0) {
+            // If we are in the background, then check to see if this process
+            // is bad.  If so, we will just silently fail.
+            if (mBadProcesses.get(info.processName, info.uid) != null) {
+                if (DEBUG_PROCESSES) Slog.v(TAG, &quot;Bad process: &quot; + info.uid
+                        + &quot;/&quot; + info.processName);
+                return null;
+            }
+        } else {
+            // When the user is explicitly starting a process, then clear its
+            // crash count so that we won&apos;t make it bad until they see at
+            // least one crash dialog again, and make the process good again
+            // if it had been bad.
+            if (DEBUG_PROCESSES) Slog.v(TAG, &quot;Clearing bad process: &quot; + info.uid
+                    + &quot;/&quot; + info.processName);
+            mProcessCrashTimes.remove(info.processName, info.uid);
+            if (mBadProcesses.get(info.processName, info.uid) != null) {
+                EventLog.writeEvent(EventLogTags.AM_PROC_GOOD,
+                        UserHandle.getUserId(info.uid), info.uid,
+                        info.processName);
+                mBadProcesses.remove(info.processName, info.uid);
+                if (app != null) {
+                    app.bad = false;
+                }
+            }
+        }
+    } else {
+        // If this is an isolated process, it can&apos;t re-use an existing process.
+        app = null;
+    }
+
+    // We don&apos;t have to do anything more if:
+    // (1) There is an existing application record; and
+    // (2) The caller doesn&apos;t think it is dead, OR there is no thread
+    //     object attached to it so we know it couldn&apos;t have crashed; and
+    // (3) There is a pid assigned to it, so it is either starting or
+    //     already running.
+    if (DEBUG_PROCESSES) Slog.v(TAG_PROCESSES, &quot;startProcess: name=&quot; + processName
+            + &quot; app=&quot; + app + &quot; knownToBeDead=&quot; + knownToBeDead
+            + &quot; thread=&quot; + (app != null ? app.thread : null)
+            + &quot; pid=&quot; + (app != null ? app.pid : -1));
+    if (app != null &amp;&amp; app.pid &gt; 0) {
+        if (!knownToBeDead || app.thread == null) {
+            // We already have the app running, or are waiting for it to
+            // come up (we have a pid but not yet its thread), so keep it.
+            if (DEBUG_PROCESSES) Slog.v(TAG_PROCESSES, &quot;App already running: &quot; + app);
+            // If this is a new package in the process, add the package to the list
+            app.addPackage(info.packageName, info.versionCode, mProcessStats);
+            checkTime(startTime, &quot;startProcess: done, added package to proc&quot;);
+            return app;
+        }
+
+        // An application record is attached to a previous process,
+        // clean it up now.
+        if (DEBUG_PROCESSES || DEBUG_CLEANUP) Slog.v(TAG_PROCESSES, &quot;App died: &quot; + app);
+        checkTime(startTime, &quot;startProcess: bad proc running, killing&quot;);
+        killProcessGroup(app.info.uid, app.pid);
+        handleAppDiedLocked(app, true, true);
+        checkTime(startTime, &quot;startProcess: done killing old proc&quot;);
+    }
+
+    String hostingNameStr = hostingName != null
+            ? hostingName.flattenToShortString() : null;
+
+    if (app == null) {
+        checkTime(startTime, &quot;startProcess: creating new process record&quot;);
+        app = newProcessRecordLocked(info, processName, isolated, isolatedUid);
+        if (app == null) {
+            Slog.w(TAG, &quot;Failed making new process record for &quot;
+                    + processName + &quot;/&quot; + info.uid + &quot; isolated=&quot; + isolated);
+            return null;
+        }
+        app.crashHandler = crashHandler;
+        checkTime(startTime, &quot;startProcess: done creating new process record&quot;);
+    } else {
+        // If this is a new package in the process, add the package to the list
+        app.addPackage(info.packageName, info.versionCode, mProcessStats);
+        checkTime(startTime, &quot;startProcess: added package to existing proc&quot;);
+    }
+
+    // If the system is not ready yet, then hold off on starting this
+    // process until it is.
+    if (!mProcessesReady
+            &amp;&amp; !isAllowedWhileBooting(info)
+            &amp;&amp; !allowWhileBooting) {
+        if (!mProcessesOnHold.contains(app)) {
+            mProcessesOnHold.add(app);
+        }
+        if (DEBUG_PROCESSES) Slog.v(TAG_PROCESSES,
+                &quot;System not ready, putting on hold: &quot; + app);
+        checkTime(startTime, &quot;startProcess: returning with proc on hold&quot;);
+        return app;
+    }
+
+    checkTime(startTime, &quot;startProcess: stepping in to startProcess&quot;);
+    startProcessLocked(
+            app, hostingType, hostingNameStr, abiOverride, entryPoint, entryPointArgs);
+    checkTime(startTime, &quot;startProcess: done starting proc!&quot;);
+    return (app.pid != 0) ? app : null;
+}
+</code></pre><p>接着调用startProcessLocked的重载方法</p>
+<pre><code>private final void startProcessLocked(ProcessRecord app, String hostingType,
+            String hostingNameStr, String abiOverride, String entryPoint, String[] entryPointArgs) {
+        long startTime = SystemClock.elapsedRealtime();
+        if (app.pid &gt; 0 &amp;&amp; app.pid != MY_PID) {
+            checkTime(startTime, &quot;startProcess: removing from pids map&quot;);
+            synchronized (mPidsSelfLocked) {
+                mPidsSelfLocked.remove(app.pid);
+                mHandler.removeMessages(PROC_START_TIMEOUT_MSG, app);
+            }
+            checkTime(startTime, &quot;startProcess: done removing from pids map&quot;);
+            app.setPid(0);
+        }
+
+        if (DEBUG_PROCESSES &amp;&amp; mProcessesOnHold.contains(app)) Slog.v(TAG_PROCESSES,
+                &quot;startProcessLocked removing on hold: &quot; + app);
+        mProcessesOnHold.remove(app);
+
+        checkTime(startTime, &quot;startProcess: starting to update cpu stats&quot;);
+        updateCpuStats();
+        checkTime(startTime, &quot;startProcess: done updating cpu stats&quot;);
+
+        try {
+            try {
+                if (AppGlobals.getPackageManager().isPackageFrozen(app.info.packageName)) {
+                    // This is caught below as if we had failed to fork zygote
+                    throw new RuntimeException(&quot;Package &quot; + app.info.packageName + &quot; is frozen!&quot;);
+                }
+            } catch (RemoteException e) {
+                throw e.rethrowAsRuntimeException();
+            }
+
+            int uid = app.uid;
+            int[] gids = null;
+            int mountExternal = Zygote.MOUNT_EXTERNAL_NONE;
+            if (!app.isolated) {
+                int[] permGids = null;
+                try {
+                    checkTime(startTime, &quot;startProcess: getting gids from package manager&quot;);
+                    final IPackageManager pm = AppGlobals.getPackageManager();
+                    permGids = pm.getPackageGids(app.info.packageName, app.userId);
+                    MountServiceInternal mountServiceInternal = LocalServices.getService(
+                            MountServiceInternal.class);
+                    mountExternal = mountServiceInternal.getExternalStorageMountMode(uid,
+                            app.info.packageName);
+                } catch (RemoteException e) {
+                    throw e.rethrowAsRuntimeException();
+                }
+
+                /*
+                 * Add shared application and profile GIDs so applications can share some
+                 * resources like shared libraries and access user-wide resources
+                 */
+                if (ArrayUtils.isEmpty(permGids)) {
+                    gids = new int[2];
+                } else {
+                    gids = new int[permGids.length + 2];
+                    System.arraycopy(permGids, 0, gids, 2, permGids.length);
+                }
+                gids[0] = UserHandle.getSharedAppGid(UserHandle.getAppId(uid));
+                gids[1] = UserHandle.getUserGid(UserHandle.getUserId(uid));
+            }
+            checkTime(startTime, &quot;startProcess: building args&quot;);
+            if (mFactoryTest != FactoryTest.FACTORY_TEST_OFF) {
+                if (mFactoryTest == FactoryTest.FACTORY_TEST_LOW_LEVEL
+                        &amp;&amp; mTopComponent != null
+                        &amp;&amp; app.processName.equals(mTopComponent.getPackageName())) {
+                    uid = 0;
+                }
+                if (mFactoryTest == FactoryTest.FACTORY_TEST_HIGH_LEVEL
+                        &amp;&amp; (app.info.flags&amp;ApplicationInfo.FLAG_FACTORY_TEST) != 0) {
+                    uid = 0;
+                }
+            }
+            int debugFlags = 0;
+            if ((app.info.flags &amp; ApplicationInfo.FLAG_DEBUGGABLE) != 0) {
+                debugFlags |= Zygote.DEBUG_ENABLE_DEBUGGER;
+                // Also turn on CheckJNI for debuggable apps. It&apos;s quite
+                // awkward to turn on otherwise.
+                debugFlags |= Zygote.DEBUG_ENABLE_CHECKJNI;
+            }
+            // Run the app in safe mode if its manifest requests so or the
+            // system is booted in safe mode.
+            if ((app.info.flags &amp; ApplicationInfo.FLAG_VM_SAFE_MODE) != 0 ||
+                mSafeMode == true) {
+                debugFlags |= Zygote.DEBUG_ENABLE_SAFEMODE;
+            }
+            if (&quot;1&quot;.equals(SystemProperties.get(&quot;debug.checkjni&quot;))) {
+                debugFlags |= Zygote.DEBUG_ENABLE_CHECKJNI;
+            }
+            String jitDebugProperty = SystemProperties.get(&quot;debug.usejit&quot;);
+            if (&quot;true&quot;.equals(jitDebugProperty)) {
+                debugFlags |= Zygote.DEBUG_ENABLE_JIT;
+            } else if (!&quot;false&quot;.equals(jitDebugProperty)) {
+                // If we didn&apos;t force disable by setting false, defer to the dalvik vm options.
+                if (&quot;true&quot;.equals(SystemProperties.get(&quot;dalvik.vm.usejit&quot;))) {
+                    debugFlags |= Zygote.DEBUG_ENABLE_JIT;
+                }
+            }
+            String genDebugInfoProperty = SystemProperties.get(&quot;debug.generate-debug-info&quot;);
+            if (&quot;true&quot;.equals(genDebugInfoProperty)) {
+                debugFlags |= Zygote.DEBUG_GENERATE_DEBUG_INFO;
+            }
+            if (&quot;1&quot;.equals(SystemProperties.get(&quot;debug.jni.logging&quot;))) {
+                debugFlags |= Zygote.DEBUG_ENABLE_JNI_LOGGING;
+            }
+            if (&quot;1&quot;.equals(SystemProperties.get(&quot;debug.assert&quot;))) {
+                debugFlags |= Zygote.DEBUG_ENABLE_ASSERT;
+            }
+
+            String requiredAbi = (abiOverride != null) ? abiOverride : app.info.primaryCpuAbi;
+            if (requiredAbi == null) {
+                requiredAbi = Build.SUPPORTED_ABIS[0];
+            }
+
+            String instructionSet = null;
+            if (app.info.primaryCpuAbi != null) {
+                instructionSet = VMRuntime.getInstructionSet(app.info.primaryCpuAbi);
+            }
+
+            app.gids = gids;
+            app.requiredAbi = requiredAbi;
+            app.instructionSet = instructionSet;
+
+            // Start the process.  It will either succeed and return a result containing
+            // the PID of the new process, or else throw a RuntimeException.
+            boolean isActivityProcess = (entryPoint == null);
+            if (entryPoint == null) entryPoint = &quot;android.app.ActivityThread&quot;;
+            Trace.traceBegin(Trace.TRACE_TAG_ACTIVITY_MANAGER, &quot;Start proc: &quot; +
+                    app.processName);
+            checkTime(startTime, &quot;startProcess: asking zygote to start proc&quot;);
+
+            Process.ProcessStartResult startResult = Process.start(entryPoint,
+                    app.processName, uid, uid, gids, debugFlags, mountExternal,
+                    app.info.targetSdkVersion, app.info.seinfo, requiredAbi, instructionSet,
+                    app.info.dataDir, entryPointArgs);
+            checkTime(startTime, &quot;startProcess: returned from zygote!&quot;);
+            Trace.traceEnd(Trace.TRACE_TAG_ACTIVITY_MANAGER);
+
+            if (app.isolated) {
+                mBatteryStatsService.addIsolatedUid(app.uid, app.info.uid);
+            }
+            mBatteryStatsService.noteProcessStart(app.processName, app.info.uid);
+            checkTime(startTime, &quot;startProcess: done updating battery stats&quot;);
+
+            EventLog.writeEvent(EventLogTags.AM_PROC_START,
+                    UserHandle.getUserId(uid), startResult.pid, uid,
+                    app.processName, hostingType,
+                    hostingNameStr != null ? hostingNameStr : &quot;&quot;);
+
+            if (app.persistent) {
+                Watchdog.getInstance().processStarted(app.processName, startResult.pid);
+            }
+
+            checkTime(startTime, &quot;startProcess: building log message&quot;);
+            StringBuilder buf = mStringBuilder;
+            buf.setLength(0);
+            buf.append(&quot;Start proc &quot;);
+            buf.append(startResult.pid);
+            buf.append(&apos;:&apos;);
+            buf.append(app.processName);
+            buf.append(&apos;/&apos;);
+            UserHandle.formatUid(buf, uid);
+            if (!isActivityProcess) {
+                buf.append(&quot; [&quot;);
+                buf.append(entryPoint);
+                buf.append(&quot;]&quot;);
+            }
+            buf.append(&quot; for &quot;);
+            buf.append(hostingType);
+            if (hostingNameStr != null) {
+                buf.append(&quot; &quot;);
+                buf.append(hostingNameStr);
+            }
+            Slog.i(TAG, buf.toString());
+            app.setPid(startResult.pid);
+            app.usingWrapper = startResult.usingWrapper;
+            app.removed = false;
+            app.killed = false;
+            app.killedByAm = false;
+            checkTime(startTime, &quot;startProcess: starting to update pids map&quot;);
+            synchronized (mPidsSelfLocked) {
+                this.mPidsSelfLocked.put(startResult.pid, app);
+                if (isActivityProcess) {
+                    Message msg = mHandler.obtainMessage(PROC_START_TIMEOUT_MSG);
+                    msg.obj = app;
+                    mHandler.sendMessageDelayed(msg, startResult.usingWrapper
+                            ? PROC_START_TIMEOUT_WITH_WRAPPER : PROC_START_TIMEOUT);
+                }
+            }
+            checkTime(startTime, &quot;startProcess: done updating pids map&quot;);
+        } catch (RuntimeException e) {
+            // XXX do better error recovery.
+            app.setPid(0);
+            mBatteryStatsService.noteProcessFinish(app.processName, app.info.uid);
+            if (app.isolated) {
+                mBatteryStatsService.removeIsolatedUid(app.uid, app.info.uid);
+            }
+            Slog.e(TAG, &quot;Failure starting process &quot; + app.processName, e);
+        }
+    }
+</code></pre><p>重点</p>
+<pre><code>Process.ProcessStartResult startResult = Process.start(entryPoint,
+                           app.processName, uid, uid, gids, debugFlags, mountExternal,
+                           app.info.targetSdkVersion, app.info.seinfo, requiredAbi, instructionSet,
+                           app.info.dataDir, entryPointArgs);      
+</code></pre><p>###转到Process-start                                     </p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2018/01/18/ActivityManagerService-startProcessLocked/" data-id="cjck3quq80004c5s6p28wuers" class="article-share-link">Teilen</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/android-ActivityManagerService-startProcessLocked-Process-start/">android ActivityManagerService-startProcessLocked Process-start</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2018/01/18/Process-start/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Neuer</strong>
+      <div class="article-nav-title">
+        
+          Process-start
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2018/01/18/ActivityStackSupervisor-startSpecificActivityLocked/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Älter</strong>
+      <div class="article-nav-title">ActivityStackSupervisor-startSpecificActivityLocked</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tags</h3>
+    <div class="widget">
+      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/android/">android</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/android-ActivityManagerNative-getDefault/">android ActivityManagerNative-getDefault</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/android-ActivityManagerNative-getDefault-ActivityManagerService-startActivity/">android ActivityManagerNative-getDefault ActivityManagerService-startActivity</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/android-ActivityManagerService-attachApplication-ActivityStackSupervisor-attachApplicationLocked/">android ActivityManagerService-attachApplication ActivityStackSupervisor-attachApplicationLocked</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/android-ActivityManagerService-startActivity-ActivityStarter-startActivityMayWait-ActivityStackSupervisor-startActivityMayWait/">android ActivityManagerService-startActivity ActivityStarter-startActivityMayWait ActivityStackSupervisor-startActivityMayWait</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/android-ActivityManagerService-startProcessLocked-Process-start/">android ActivityManagerService-startProcessLocked Process-start</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/android-ActivityStack-resumeTopActivityLocked-ActivityStackSupervisor-startSpecificActivityLocked/">android ActivityStack-resumeTopActivityLocked ActivityStackSupervisor-startSpecificActivityLocked</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/android-ActivityStack-startActivityLocked-ActivityStackSupervisor-resumeTopActivitiesLocked/">android ActivityStack-startActivityLocked ActivityStackSupervisor-resumeTopActivitiesLocked</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/android-ActivityStackSupervisor-attachApplicationLocked-ActivityThread-scheduleLaunchActivity/">android ActivityStackSupervisor-attachApplicationLocked ActivityThread-scheduleLaunchActivity</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/android-ActivityStackSupervisor-resumeTopActivitiesLocked-ActivityStack-resumeTopActivityLocked/">android ActivityStackSupervisor-resumeTopActivitiesLocked ActivityStack-resumeTopActivityLocked</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/android-ActivityStackSupervisor-startActivityMayWait-ActivityStack-startActivityLocked/">android ActivityStackSupervisor-startActivityMayWait ActivityStack-startActivityLocked</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/android-ActivityStackSupervisor-startSpecificActivityLocked-ActivityManagerService-startProcessLocked/">android ActivityStackSupervisor-startSpecificActivityLocked ActivityManagerService-startProcessLocked</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/android-ActivityStarter-startActivityMayWait/">android ActivityStarter-startActivityMayWait</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/android-ActivityThread-main-ActivityManagerService-attachApplication/">android ActivityThread-main ActivityManagerService-attachApplication</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/android-ActivityThread-scheduleLaunchActivity/">android ActivityThread-scheduleLaunchActivity</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/android-Process-start-ActivityThread-main/">android Process-start ActivityThread-main</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/android/" style="font-size: 10px;">android</a> <a href="/tags/android-ActivityManagerNative-getDefault/" style="font-size: 10px;">android ActivityManagerNative-getDefault</a> <a href="/tags/android-ActivityManagerNative-getDefault-ActivityManagerService-startActivity/" style="font-size: 10px;">android ActivityManagerNative-getDefault ActivityManagerService-startActivity</a> <a href="/tags/android-ActivityManagerService-attachApplication-ActivityStackSupervisor-attachApplicationLocked/" style="font-size: 10px;">android ActivityManagerService-attachApplication ActivityStackSupervisor-attachApplicationLocked</a> <a href="/tags/android-ActivityManagerService-startActivity-ActivityStarter-startActivityMayWait-ActivityStackSupervisor-startActivityMayWait/" style="font-size: 10px;">android ActivityManagerService-startActivity ActivityStarter-startActivityMayWait ActivityStackSupervisor-startActivityMayWait</a> <a href="/tags/android-ActivityManagerService-startProcessLocked-Process-start/" style="font-size: 10px;">android ActivityManagerService-startProcessLocked Process-start</a> <a href="/tags/android-ActivityStack-resumeTopActivityLocked-ActivityStackSupervisor-startSpecificActivityLocked/" style="font-size: 10px;">android ActivityStack-resumeTopActivityLocked ActivityStackSupervisor-startSpecificActivityLocked</a> <a href="/tags/android-ActivityStack-startActivityLocked-ActivityStackSupervisor-resumeTopActivitiesLocked/" style="font-size: 10px;">android ActivityStack-startActivityLocked ActivityStackSupervisor-resumeTopActivitiesLocked</a> <a href="/tags/android-ActivityStackSupervisor-attachApplicationLocked-ActivityThread-scheduleLaunchActivity/" style="font-size: 10px;">android ActivityStackSupervisor-attachApplicationLocked ActivityThread-scheduleLaunchActivity</a> <a href="/tags/android-ActivityStackSupervisor-resumeTopActivitiesLocked-ActivityStack-resumeTopActivityLocked/" style="font-size: 10px;">android ActivityStackSupervisor-resumeTopActivitiesLocked ActivityStack-resumeTopActivityLocked</a> <a href="/tags/android-ActivityStackSupervisor-startActivityMayWait-ActivityStack-startActivityLocked/" style="font-size: 10px;">android ActivityStackSupervisor-startActivityMayWait ActivityStack-startActivityLocked</a> <a href="/tags/android-ActivityStackSupervisor-startSpecificActivityLocked-ActivityManagerService-startProcessLocked/" style="font-size: 10px;">android ActivityStackSupervisor-startSpecificActivityLocked ActivityManagerService-startProcessLocked</a> <a href="/tags/android-ActivityStarter-startActivityMayWait/" style="font-size: 10px;">android ActivityStarter-startActivityMayWait</a> <a href="/tags/android-ActivityThread-main-ActivityManagerService-attachApplication/" style="font-size: 10px;">android ActivityThread-main ActivityManagerService-attachApplication</a> <a href="/tags/android-ActivityThread-scheduleLaunchActivity/" style="font-size: 10px;">android ActivityThread-scheduleLaunchActivity</a> <a href="/tags/android-Process-start-ActivityThread-main/" style="font-size: 10px;">android Process-start ActivityThread-main</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archiv</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/01/">January 2018</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">letzter Beitrag</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2018/01/18/ActivityThread-scheduleLaunchActivity/">ActivityThread-scheduleLaunchActivity </a>
+          </li>
+        
+          <li>
+            <a href="/2018/01/18/ActivityStackSupervisor-attachApplicationLocked/">ActivityStackSupervisor-attachApplicationLocked</a>
+          </li>
+        
+          <li>
+            <a href="/2018/01/18/ActivityManagerService-attachApplication/">ActivityManagerService-attachApplication</a>
+          </li>
+        
+          <li>
+            <a href="/2018/01/18/ActivityThread-main/">ActivityThread-main</a>
+          </li>
+        
+          <li>
+            <a href="/2018/01/18/Process-start/">Process-start</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2018 zhushuhao<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+
+
+  </div>
+</body>
+</html>

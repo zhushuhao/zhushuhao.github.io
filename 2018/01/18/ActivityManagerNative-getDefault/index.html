@@ -5,17 +5,19 @@
   
 
   
-  <title>Archiv | 生死如风，常伴吾身</title>
+  <title>ActivityManagerNative-getDefault | 生死如风，常伴吾身</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="个人小站">
-<meta property="og:type" content="website">
-<meta property="og:title" content="生死如风，常伴吾身">
-<meta property="og:url" content="http://yoursite.com/archives/index.html">
+  <meta name="description" content="源码位置    android.app.ActivityManagerNative.java public abstract class ActivityManagerNative extends Binder  implements IActivityManager{}  ActivityManagerNative是一个抽象类,继承了Binder类，实现了IActivityManager接口 A">
+<meta name="keywords" content="android ActivityManagerNative-getDefault ActivityManagerService-startActivity">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ActivityManagerNative-getDefault">
+<meta property="og:url" content="http://yoursite.com/2018/01/18/ActivityManagerNative-getDefault/index.html">
 <meta property="og:site_name" content="生死如风，常伴吾身">
-<meta property="og:description" content="个人小站">
+<meta property="og:description" content="源码位置    android.app.ActivityManagerNative.java public abstract class ActivityManagerNative extends Binder  implements IActivityManager{}  ActivityManagerNative是一个抽象类,继承了Binder类，实现了IActivityManager接口 A">
+<meta property="og:updated_time" content="2018-01-18T02:31:36.718Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="生死如风，常伴吾身">
-<meta name="twitter:description" content="个人小站">
+<meta name="twitter:title" content="ActivityManagerNative-getDefault">
+<meta name="twitter:description" content="源码位置    android.app.ActivityManagerNative.java public abstract class ActivityManagerNative extends Binder  implements IActivityManager{}  ActivityManagerNative是一个抽象类,继承了Binder类，实现了IActivityManager接口 A">
   
     <link rel="alternate" href="/atom.xml" title="生死如风，常伴吾身" type="application/atom+xml">
   
@@ -62,216 +64,203 @@
   </div>
 </header>
       <div class="outer">
-        <section id="main">
-  
-  
-    
-    
-      
-      
-      <section class="archives-wrap">
-        <div class="archive-year-wrap">
-          <a href="/archives/2018" class="archive-year">2018</a>
-        </div>
-        <div class="archives">
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2018/01/18/ActivityThread-scheduleLaunchActivity/" class="archive-article-date">
-  <time datetime="2018-01-18T04:32:47.000Z" itemprop="datePublished">Jan 18</time>
+        <section id="main"><article id="post-ActivityManagerNative-getDefault" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2018/01/18/ActivityManagerNative-getDefault/" class="article-date">
+  <time datetime="2018-01-18T01:53:16.000Z" itemprop="datePublished">2018-01-18</time>
 </a>
-      
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
   
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2018/01/18/ActivityThread-scheduleLaunchActivity/">ActivityThread-scheduleLaunchActivity </a>
+    <h1 class="article-title" itemprop="name">
+      ActivityManagerNative-getDefault
     </h1>
   
 
-    </header>
-  </div>
-</article>
-  
+      </header>
     
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2018/01/18/ActivityStackSupervisor-attachApplicationLocked/" class="archive-article-date">
-  <time datetime="2018-01-18T04:28:01.000Z" itemprop="datePublished">Jan 18</time>
-</a>
+    <div class="article-entry" itemprop="articleBody">
       
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2018/01/18/ActivityStackSupervisor-attachApplicationLocked/">ActivityStackSupervisor-attachApplicationLocked</a>
-    </h1>
-  
+        <p>源码位置 </p>
+<p>  android.app.ActivityManagerNative.java</p>
+<pre><code>public abstract class ActivityManagerNative extends Binder 
+implements IActivityManager{}
 
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2018/01/18/ActivityManagerService-attachApplication/" class="archive-article-date">
-  <time datetime="2018-01-18T04:19:02.000Z" itemprop="datePublished">Jan 18</time>
-</a>
+ActivityManagerNative是一个抽象类,继承了Binder类，实现了IActivityManager接口
+ActivityManagerService是它的子类，也就实现了IActivityManager接口，
+下面的ActivityManagerProxy类也实现了IActivityManager接口
+</code></pre><p>getDefault()方法, 最终得到的是一个ActivityManagerProxy对象</p>
+<pre><code>static public IActivityManager getDefault() {
+    return gDefault.get();
+}
+</code></pre><p>查看gDefault</p>
+<pre><code>private static final Singleton&lt;IActivityManager&gt; gDefault = new Singleton&lt;IActivityManager&gt;() {
+        protected IActivityManager create() {
+
+           //获取到ActivityManagerService的Binder
+            IBinder b = ServiceManager.getService(&quot;activity&quot;);
+
+            if (false) {
+                Log.v(&quot;ActivityManager&quot;, &quot;default service binder = &quot; + b);
+            }
+
+            //得到一个ActivityManagerProxy对象
+            IActivityManager am = asInterface(b);
+            if (false) {
+                Log.v(&quot;ActivityManager&quot;, &quot;default service = &quot; + am);
+            }
+            return am;
+        }
+    };
+</code></pre><p>查看asInterface方法,返回了一个ActivityManagerProxy对象</p>
+<pre><code>  /**
+    * Cast a Binder object into an activity manager interface, generating
+    * a proxy if needed.
+    * 把一个Binder对象强转为一个activity manger 接口，生成一个代理对象
+    */
+static public IActivityManager asInterface(IBinder obj) {
+       if (obj == null) {
+           return null;
+       }
+
+        //String descriptor  = &quot;android.app.IActivityManager&quot;;
+
+       IActivityManager in =
+           (IActivityManager)obj.queryLocalInterface(descriptor);
+
+       if (in != null) {
+           return in;
+       }
+       //返回了一个ActivityManagerProxy
+
+       return new ActivityManagerProxy(obj);
+
+   }
+</code></pre><p>查看queryLocalInterface方法</p>
+<pre><code>/**
+ * Attempt to retrieve a local implementation of an interface
+ * for this Binder object.  If null is returned, you will need
+ * to instantiate a proxy class to marshall calls through
+ * the transact() method.
+ *    尝试为这个binder对象取出一个本地接口实现。如果返回null,你需要通过transaction()实例化一个代理对象
+ *    引领调用命令
+ *
+ */
+public IInterface queryLocalInterface(String descriptor);
+</code></pre><p>android.os.Binder.java,实现了IBinder接口</p>
+<pre><code>/**
+  * Use information supplied to attachInterface() to return the
+  * associated IInterface if it matches the requested
+  * descriptor.
+  */
+ public IInterface queryLocalInterface(String descriptor) {
+     if (mDescriptor.equals(descriptor)) {
+         return mOwner;
+     }
+     return null;
+ }
+</code></pre><p>查看attachInterface()方法</p>
+<pre><code>/**
+ * Convenience method for associating a specific interface with the Binder.
+ * After calling, queryLocalInterface() will be implemented for you
+ * to return the given owner IInterface when the corresponding
+ * descriptor is requested.
+ 这个方法把一个特定的接口和Binder关联在一起。调用这个方法之后，queryLocalInterface() 会被实现，然后当相关的descriptor
+ 被请求的时候，你就可以把owner IInterface返回给他
+ */
+public void attachInterface(IInterface owner, String descriptor) {
+    mOwner = owner;
+    mDescriptor = descriptor;
+}
+</code></pre><p>最后查看ActivityManagerProxy类,这是ActivityManagerNative的内部类。它实现了IActivityManager接口，<br>通过Binder通信，最终会调用ActivityManagerService里面的类似startActivity等等的方法</p>
+<pre><code>class ActivityManagerProxy implements IActivityManager
+{
+    public ActivityManagerProxy(IBinder remote)
+    {
+        mRemote = remote;
+    }
+
+    public IBinder asBinder()
+    {
+        return mRemote;
+    }
+
+    public int startActivity(IApplicationThread caller, String callingPackage, Intent intent,
+            String resolvedType, IBinder resultTo, String resultWho, int requestCode,
+            int startFlags, ProfilerInfo profilerInfo, Bundle options) throws RemoteException {
+        Parcel data = Parcel.obtain();
+        Parcel reply = Parcel.obtain();
+        data.writeInterfaceToken(IActivityManager.descriptor);
+        data.writeStrongBinder(caller != null ? caller.asBinder() : null);
+        data.writeString(callingPackage);
+        intent.writeToParcel(data, 0);
+        data.writeString(resolvedType);
+        data.writeStrongBinder(resultTo);
+        data.writeString(resultWho);
+        data.writeInt(requestCode);
+        data.writeInt(startFlags);
+        if (profilerInfo != null) {
+            data.writeInt(1);
+            profilerInfo.writeToParcel(data, Parcelable.PARCELABLE_WRITE_RETURN_VALUE);
+        } else {
+            data.writeInt(0);
+        }
+        if (options != null) {
+            data.writeInt(1);
+            options.writeToParcel(data, 0);
+        } else {
+            data.writeInt(0);
+        }
+        mRemote.transact(START_ACTIVITY_TRANSACTION, data, reply, 0);
+        reply.readException();
+        int result = reply.readInt();
+        reply.recycle();
+        data.recycle();
+        return result;
+    }
+
+    ...
+}
+</code></pre><p>###转到ActivityManagerService-startActivity</p>
+
       
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2018/01/18/ActivityManagerService-attachApplication/">ActivityManagerService-attachApplication</a>
-    </h1>
-  
-
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2018/01/18/ActivityThread-main/" class="archive-article-date">
-  <time datetime="2018-01-18T04:10:59.000Z" itemprop="datePublished">Jan 18</time>
-</a>
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2018/01/18/ActivityManagerNative-getDefault/" data-id="cjck3quq10001c5s6l1gi2ss3" class="article-share-link">Teilen</a>
       
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2018/01/18/ActivityThread-main/">ActivityThread-main</a>
-    </h1>
-  
-
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2018/01/18/Process-start/" class="archive-article-date">
-  <time datetime="2018-01-18T04:03:13.000Z" itemprop="datePublished">Jan 18</time>
-</a>
       
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2018/01/18/Process-start/">Process-start</a>
-    </h1>
-  
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/android-ActivityManagerNative-getDefault-ActivityManagerService-startActivity/">android ActivityManagerNative-getDefault ActivityManagerService-startActivity</a></li></ul>
 
-    </header>
+    </footer>
   </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2018/01/18/ActivityManagerService-startActivity/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Neuer</strong>
+      <div class="article-nav-title">
+        
+          ActivityManagerService-startActivity
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2018/01/17/Instrumentation-execStartActivity/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Älter</strong>
+      <div class="article-nav-title">Instrumentation.execStartActivity</div>
+    </a>
+  
+</nav>
+
+  
 </article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2018/01/18/ActivityManagerService-startProcessLocked/" class="archive-article-date">
-  <time datetime="2018-01-18T03:57:19.000Z" itemprop="datePublished">Jan 18</time>
-</a>
-      
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2018/01/18/ActivityManagerService-startProcessLocked/">ActivityManagerService-startProcessLocked</a>
-    </h1>
-  
-
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2018/01/18/ActivityStackSupervisor-startSpecificActivityLocked/" class="archive-article-date">
-  <time datetime="2018-01-18T03:53:39.000Z" itemprop="datePublished">Jan 18</time>
-</a>
-      
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2018/01/18/ActivityStackSupervisor-startSpecificActivityLocked/">ActivityStackSupervisor-startSpecificActivityLocked</a>
-    </h1>
-  
-
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2018/01/18/ActivityStack-resumeTopActivityLocked/" class="archive-article-date">
-  <time datetime="2018-01-18T03:48:33.000Z" itemprop="datePublished">Jan 18</time>
-</a>
-      
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2018/01/18/ActivityStack-resumeTopActivityLocked/">ActivityStack-resumeTopActivityLocked</a>
-    </h1>
-  
-
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2018/01/18/ActivityStackSupervisor-resumeTopActivitiesLocked/" class="archive-article-date">
-  <time datetime="2018-01-18T03:44:56.000Z" itemprop="datePublished">Jan 18</time>
-</a>
-      
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2018/01/18/ActivityStackSupervisor-resumeTopActivitiesLocked/">ActivityStackSupervisor-resumeTopActivitiesLocked</a>
-    </h1>
-  
-
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2018/01/18/ActivityStack-startActivityLocked/" class="archive-article-date">
-  <time datetime="2018-01-18T03:35:02.000Z" itemprop="datePublished">Jan 18</time>
-</a>
-      
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2018/01/18/ActivityStack-startActivityLocked/">ActivityStack-startActivityLocked</a>
-    </h1>
-  
-
-    </header>
-  </div>
-</article>
-  
-  
-    </div></section>
-  
-
-
-  <nav id="page-nav">
-    
-    <span class="page-number current">1</span><a class="page-number" href="/archives/page/2/">2</a><a class="extend next" rel="next" href="/archives/page/2/">weiter &raquo;</a>
-  </nav>
 
 </section>
         
