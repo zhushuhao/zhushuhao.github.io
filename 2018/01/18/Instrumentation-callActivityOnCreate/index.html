@@ -5,17 +5,19 @@
   
 
   
-  <title>Tag: ActivityStackSupervisor-startActivityMayWait | 小代码也有大世界</title>
+  <title>Instrumentation.callActivityOnCreate | 小代码也有大世界</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="大前端-android">
-<meta property="og:type" content="website">
-<meta property="og:title" content="小代码也有大世界">
-<meta property="og:url" content="http://yoursite.com/tags/ActivityStackSupervisor-startActivityMayWait/index.html">
+  <meta name="description" content="查看callActivityOnCreate方法 /**   * Perform calling of an activity&amp;apos;s {@link Activity#onCreate}   * method.  The default implementation simply calls through to that method.   *   * @param activity Th">
+<meta name="keywords" content="android,Instrumentation.callActivityOnCreate">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Instrumentation.callActivityOnCreate">
+<meta property="og:url" content="http://yoursite.com/2018/01/18/Instrumentation-callActivityOnCreate/index.html">
 <meta property="og:site_name" content="小代码也有大世界">
-<meta property="og:description" content="大前端-android">
+<meta property="og:description" content="查看callActivityOnCreate方法 /**   * Perform calling of an activity&amp;apos;s {@link Activity#onCreate}   * method.  The default implementation simply calls through to that method.   *   * @param activity Th">
+<meta property="og:updated_time" content="2018-01-18T06:54:04.289Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="小代码也有大世界">
-<meta name="twitter:description" content="大前端-android">
+<meta name="twitter:title" content="Instrumentation.callActivityOnCreate">
+<meta name="twitter:description" content="查看callActivityOnCreate方法 /**   * Perform calling of an activity&amp;apos;s {@link Activity#onCreate}   * method.  The default implementation simply calls through to that method.   *   * @param activity Th">
   
     <link rel="alternate" href="/atom.xml" title="小代码也有大世界" type="application/atom+xml">
   
@@ -62,59 +64,126 @@
   </div>
 </header>
       <div class="outer">
-        <section id="main">
-  
-  
-    
-    
-      
-      
-      <section class="archives-wrap">
-        <div class="archive-year-wrap">
-          <a href="/archives/2018" class="archive-year">2018</a>
-        </div>
-        <div class="archives">
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2018/01/18/ActivityStackSupervisor-startActivityMayWait/" class="archive-article-date">
-  <time datetime="2018-01-18T03:22:10.000Z" itemprop="datePublished">Jan 18</time>
+        <section id="main"><article id="post-Instrumentation-callActivityOnCreate" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2018/01/18/Instrumentation-callActivityOnCreate/" class="article-date">
+  <time datetime="2018-01-18T06:49:21.000Z" itemprop="datePublished">2018-01-18</time>
 </a>
-      
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
   
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2018/01/18/ActivityStackSupervisor-startActivityMayWait/">ActivityStackSupervisor-startActivityMayWait</a>
+    <h1 class="article-title" itemprop="name">
+      Instrumentation.callActivityOnCreate
     </h1>
   
 
-    </header>
-  </div>
-</article>
-  
+      </header>
     
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2018/01/18/ActivityManagerService-startActivity/" class="archive-article-date">
-  <time datetime="2018-01-18T02:24:35.000Z" itemprop="datePublished">Jan 18</time>
-</a>
+    <div class="article-entry" itemprop="articleBody">
       
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2018/01/18/ActivityManagerService-startActivity/">ActivityManagerService-startActivity</a>
-    </h1>
-  
+        <p>查看callActivityOnCreate方法</p>
+<pre><code>/**
+  * Perform calling of an activity&apos;s {@link Activity#onCreate}
+  * method.  The default implementation simply calls through to that method.
+  *
+  * @param activity The activity being created.
+  * @param icicle The previously frozen state (or null) to pass through to onCreate().
+  */
+ public void callActivityOnCreate(Activity activity, Bundle icicle) {
+     prePerformCreate(activity);
+     activity.performCreate(icicle);
+     postPerformCreate(activity);
+ }
+</code></pre><p>转到activity.performCreate();</p>
+<pre><code>final void performCreate(Bundle icicle) {
+    onCreate(icicle);
+    mActivityTransitionState.readState(icicle);
+    performCreateCommon();
+}
+</code></pre><p>转到onCreate(icicle);     </p>
+<pre><code>/**
+     * Called when the activity is starting.  This is where most initialization
+     * should go: calling {@link #setContentView(int)} to inflate the
+     * activity&apos;s UI, using {@link #findViewById} to programmatically interact
+     * with widgets in the UI, calling
+     * {@link #managedQuery(android.net.Uri , String[], String, String[], String)} to retrieve
+     * cursors for data being displayed, etc.
+     *
+     * &lt;p&gt;You can call {@link #finish} from within this function, in
+     * which case onDestroy() will be immediately called without any of the rest
+     * of the activity lifecycle ({@link #onStart}, {@link #onResume},
+     * {@link #onPause}, etc) executing.
+     *
+     * &lt;p&gt;&lt;em&gt;Derived classes must call through to the super class&apos;s
+     * implementation of this method.  If they do not, an exception will be
+     * thrown.&lt;/em&gt;&lt;/p&gt;
+     *
+     * @param savedInstanceState If the activity is being re-initialized after
+     *     previously being shut down then this Bundle contains the data it most
+     *     recently supplied in {@link #onSaveInstanceState}.  &lt;b&gt;&lt;i&gt;Note: Otherwise it is null.&lt;/i&gt;&lt;/b&gt;
+     *
+     * @see #onStart
+     * @see #onSaveInstanceState
+     * @see #onRestoreInstanceState
+     * @see #onPostCreate
+     */
+    @MainThread
+    @CallSuper
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
+        if (DEBUG_LIFECYCLE) Slog.v(TAG, &quot;onCreate &quot; + this + &quot;: &quot; + savedInstanceState);
+        if (mLastNonConfigurationInstances != null) {
+            mFragments.restoreLoaderNonConfig(mLastNonConfigurationInstances.loaders);
+        }
+        if (mActivityInfo.parentActivityName != null) {
+            if (mActionBar == null) {
+                mEnableDefaultActionBarUp = true;
+            } else {
+                mActionBar.setDefaultDisplayHomeAsUpEnabled(true);
+            }
+        }
+        if (savedInstanceState != null) {
+            Parcelable p = savedInstanceState.getParcelable(FRAGMENTS_TAG);
+            mFragments.restoreAllState(p, mLastNonConfigurationInstances != null
+                    ? mLastNonConfigurationInstances.fragments : null);
+        }
+        mFragments.dispatchCreate();
+        getApplication().dispatchActivityCreated(this, savedInstanceState);
+        if (mVoiceInteractor != null) {
+            mVoiceInteractor.attachActivity(this);
+        }
+        mCalled = true;
+    }
+</code></pre><p>到这里就走到了Activity的onCreate</p>
 
-    </header>
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2018/01/18/Instrumentation-callActivityOnCreate/" data-id="cjck55s50000mhns60nb7ao89" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Instrumentation-callActivityOnCreate/">Instrumentation.callActivityOnCreate</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/android/">android</a></li></ul>
+
+    </footer>
   </div>
-</article>
+  
+    
+<nav id="article-nav">
   
   
-    </div></section>
+    <a href="/2018/01/18/ActivityThread-scheduleLaunchActivity/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">ActivityThread-scheduleLaunchActivity </div>
+    </a>
   
+</nav>
 
+  
+</article>
 
 </section>
         
