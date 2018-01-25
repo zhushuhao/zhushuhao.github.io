@@ -8,13 +8,13 @@
   <title>ActivityStack-startActivityLocked | 小代码 大世界</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
   <meta name="description" content="###源码位置 com.android.server.am.ActivityStack.java 简介 final class ActivityStack {} 没有继承任何类，也不能被任何类继承，没有实现任何接口  /**  * State and management of a single stack of activities.  */  Activities单个栈的状态和管理 查看sta">
-<meta name="keywords" content="android,ActivityStack-startActivityLocked,ActivityStackSupervisor-resumeTopActivitiesLocked">
+<meta name="keywords" content="android,ActivityStackSupervisor-resumeTopActivitiesLocked,ActivityStack-startActivityLocked">
 <meta property="og:type" content="article">
 <meta property="og:title" content="ActivityStack-startActivityLocked">
 <meta property="og:url" content="http://yoursite.com/2018/01/18/ActivityStack-startActivityLocked/index.html">
 <meta property="og:site_name" content="小代码 大世界">
 <meta property="og:description" content="###源码位置 com.android.server.am.ActivityStack.java 简介 final class ActivityStack {} 没有继承任何类，也不能被任何类继承，没有实现任何接口  /**  * State and management of a single stack of activities.  */  Activities单个栈的状态和管理 查看sta">
-<meta property="og:updated_time" content="2018-01-18T06:35:16.876Z">
+<meta property="og:updated_time" content="2018-01-19T07:19:48.186Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="ActivityStack-startActivityLocked">
 <meta name="twitter:description" content="###源码位置 com.android.server.am.ActivityStack.java 简介 final class ActivityStack {} 没有继承任何类，也不能被任何类继承，没有实现任何接口  /**  * State and management of a single stack of activities.  */  Activities单个栈的状态和管理 查看sta">
@@ -96,179 +96,184 @@ final class ActivityStack {}
  */
  Activities单个栈的状态和管理
 </code></pre><p>查看startActivityLocked方法</p>
-<pre><code>final void startActivityLocked(ActivityRecord r, boolean newTask,
-            boolean doResume, boolean keepCurTransition, Bundle options) {
-        TaskRecord rTask = r.task;
-        final int taskId = rTask.taskId;
-        // mLaunchTaskBehind tasks get placed at the back of the task stack.
-        if (!r.mLaunchTaskBehind &amp;&amp; (taskForIdLocked(taskId) == null || newTask)) {
-            // Last activity in task had been removed or ActivityManagerService is reusing task.
-            // Insert or replace.
-            // Might not even be in.
-            insertTaskAtTop(rTask, r);
-            mWindowManager.moveTaskToTop(taskId);
-        }
-        TaskRecord task = null;
-        if (!newTask) {
-            // If starting in an existing task, find where that is...
-            boolean startIt = true;
-            for (int taskNdx = mTaskHistory.size() - 1; taskNdx &gt;= 0; --taskNdx) {
-                task = mTaskHistory.get(taskNdx);
-                if (task.getTopActivity() == null) {
-                    // All activities in task are finishing.
-                    continue;
-                }
-                if (task == r.task) {
-                    // Here it is!  Now, if this is not yet visible to the
-                    // user, then just add it without starting; it will
-                    // get started when the user navigates back to it.
-                    if (!startIt) {
-                        if (DEBUG_ADD_REMOVE) Slog.i(TAG, &quot;Adding activity &quot; + r + &quot; to task &quot;
-                                + task, new RuntimeException(&quot;here&quot;).fillInStackTrace());
-                        task.addActivityToTop(r);
-                        r.putInHistory();
-                        mWindowManager.addAppToken(task.mActivities.indexOf(r), r.appToken,
-                                r.task.taskId, mStackId, r.info.screenOrientation, r.fullscreen,
-                                (r.info.flags &amp; ActivityInfo.FLAG_SHOW_FOR_ALL_USERS) != 0,
-                                r.userId, r.info.configChanges, task.voiceSession != null,
-                                r.mLaunchTaskBehind);
-                        if (VALIDATE_TOKENS) {
-                            validateAppTokensLocked();
-                        }
-                        ActivityOptions.abort(options);
-                        return;
-                    }
-                    break;
-                } else if (task.numFullscreen &gt; 0) {
-                    startIt = false;
-                }
-            }
-        }
+<pre><code>如果需要的话，这一步中会调用到WmS的setAppStartingWindow，开始准备新应用的启动窗口。
+这其中，有重要一步是调用WindowManagerService的addAppToken方法去将信息共步给WmS，为下一步的显示做准备。
+最后，调用ActivityStackSupervisor的resumeTopActivitiesLocked方法，将显示的Activities都resume一下。
 
-        // Place a new activity at top of stack, so it is next to interact
-        // with the user.
-        //把新的activity放在栈顶，成为下一个和用户交互的activity
+ final void startActivityLocked(ActivityRecord r, boolean newTask,
+             boolean doResume, boolean keepCurTransition, Bundle options) {
 
-        // If we are not placing the new activity frontmost, we do not want
-        // to deliver the onUserLeaving callback to the actual frontmost
-        // activity
-        //如果不把新的activity放在最前面，就不会执行现在最前面的activity的onUserLeaving回调
+         TaskRecord rTask = r.task;
+         final int taskId = rTask.taskId;
+         // mLaunchTaskBehind tasks get placed at the back of the task stack.
+         if (!r.mLaunchTaskBehind &amp;&amp; (taskForIdLocked(taskId) == null || newTask)) {
+             // Last activity in task had been removed or ActivityManagerService is reusing task.
+             // Insert or replace.
+             // Might not even be in.
+             insertTaskAtTop(rTask, r);
+             mWindowManager.moveTaskToTop(taskId);
+         }
+         TaskRecord task = null;
+         if (!newTask) {
+             // If starting in an existing task, find where that is...
+             boolean startIt = true;
+             for (int taskNdx = mTaskHistory.size() - 1; taskNdx &gt;= 0; --taskNdx) {
+                 task = mTaskHistory.get(taskNdx);
+                 if (task.getTopActivity() == null) {
+                     // All activities in task are finishing.
+                     continue;
+                 }
+                 if (task == r.task) {
+                     // Here it is!  Now, if this is not yet visible to the
+                     // user, then just add it without starting; it will
+                     // get started when the user navigates back to it.
+                     if (!startIt) {
+                         if (DEBUG_ADD_REMOVE) Slog.i(TAG, &quot;Adding activity &quot; + r + &quot; to task &quot;
+                                 + task, new RuntimeException(&quot;here&quot;).fillInStackTrace());
+                         task.addActivityToTop(r);
+                         r.putInHistory();
+                         mWindowManager.addAppToken(task.mActivities.indexOf(r), r.appToken,
+                                 r.task.taskId, mStackId, r.info.screenOrientation, r.fullscreen,
+                                 (r.info.flags &amp; ActivityInfo.FLAG_SHOW_FOR_ALL_USERS) != 0,
+                                 r.userId, r.info.configChanges, task.voiceSession != null,
+                                 r.mLaunchTaskBehind);
+                         if (VALIDATE_TOKENS) {
+                             validateAppTokensLocked();
+                         }
+                         ActivityOptions.abort(options);
+                         return;
+                     }
+                     break;
+                 } else if (task.numFullscreen &gt; 0) {
+                     startIt = false;
+                 }
+             }
+         }
 
-        if (task == r.task &amp;&amp; mTaskHistory.indexOf(task) != (mTaskHistory.size() - 1)) {
-            mStackSupervisor.mUserLeaving = false;
-            if (DEBUG_USER_LEAVING) Slog.v(TAG_USER_LEAVING,
-                    &quot;startActivity() behind front, mUserLeaving=false&quot;);
-        }
+         // Place a new activity at top of stack, so it is next to interact
+         // with the user.
+         //把新的activity放在栈顶，成为下一个和用户交互的activity
 
-        task = r.task;
+         // If we are not placing the new activity frontmost, we do not want
+         // to deliver the onUserLeaving callback to the actual frontmost
+         // activity
+         //如果不把新的activity放在最前面，就不会执行现在最前面的activity的onUserLeaving回调
 
-        // Slot the activity into the history stack and proceed
-        //将activity放入历史堆栈中并继续进行
-        if (DEBUG_ADD_REMOVE) Slog.i(TAG, &quot;Adding activity &quot; + r + &quot; to stack to task &quot; + task,
-                new RuntimeException(&quot;here&quot;).fillInStackTrace());
-        task.addActivityToTop(r);
-        task.setFrontOfTask();
+         if (task == r.task &amp;&amp; mTaskHistory.indexOf(task) != (mTaskHistory.size() - 1)) {
+             mStackSupervisor.mUserLeaving = false;
+             if (DEBUG_USER_LEAVING) Slog.v(TAG_USER_LEAVING,
+                     &quot;startActivity() behind front, mUserLeaving=false&quot;);
+         }
 
-        r.putInHistory();
-        if (!isHomeStack() || numActivities() &gt; 0) {
-            // We want to show the starting preview window if we are
-            // switching to a new task, or the next activity&apos;s process is
-            // not currently running.
-            boolean showStartingIcon = newTask;
-            ProcessRecord proc = r.app;
-            if (proc == null) {
-                proc = mService.mProcessNames.get(r.processName, r.info.applicationInfo.uid);
-            }
-            if (proc == null || proc.thread == null) {
-                showStartingIcon = true;
-            }
-            if (DEBUG_TRANSITION) Slog.v(TAG_TRANSITION,
-                    &quot;Prepare open transition: starting &quot; + r);
-            if ((r.intent.getFlags() &amp; Intent.FLAG_ACTIVITY_NO_ANIMATION) != 0) {
-                mWindowManager.prepareAppTransition(AppTransition.TRANSIT_NONE, keepCurTransition);
-                mNoAnimActivities.add(r);
-            } else {
-                mWindowManager.prepareAppTransition(newTask
-                        ? r.mLaunchTaskBehind
-                                ? AppTransition.TRANSIT_TASK_OPEN_BEHIND
-                                : AppTransition.TRANSIT_TASK_OPEN
-                        : AppTransition.TRANSIT_ACTIVITY_OPEN, keepCurTransition);
-                mNoAnimActivities.remove(r);
-            }
-            mWindowManager.addAppToken(task.mActivities.indexOf(r),
-                    r.appToken, r.task.taskId, mStackId, r.info.screenOrientation, r.fullscreen,
-                    (r.info.flags &amp; ActivityInfo.FLAG_SHOW_FOR_ALL_USERS) != 0, r.userId,
-                    r.info.configChanges, task.voiceSession != null, r.mLaunchTaskBehind);
-            boolean doShow = true;
-            if (newTask) {
-                // Even though this activity is starting fresh, we still need
-                // to reset it to make sure we apply affinities to move any
-                // existing activities from other tasks in to it.
-                // If the caller has requested that the target task be
-                // reset, then do so.
-                if ((r.intent.getFlags() &amp; Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED) != 0) {
-                    resetTaskIfNeededLocked(r, r);
-                    doShow = topRunningNonDelayedActivityLocked(null) == r;
-                }
-            } else if (options != null &amp;&amp; new ActivityOptions(options).getAnimationType()
-                    == ActivityOptions.ANIM_SCENE_TRANSITION) {
-                doShow = false;
-            }
-            if (r.mLaunchTaskBehind) {
-                // Don&apos;t do a starting window for mLaunchTaskBehind. More importantly make sure we
-                // tell WindowManager that r is visible even though it is at the back of the stack.
-                mWindowManager.setAppVisibility(r.appToken, true);
-                ensureActivitiesVisibleLocked(null, 0);
-            } else if (SHOW_APP_STARTING_PREVIEW &amp;&amp; doShow) {
-                // Figure out if we are transitioning from another activity that is
-                // &quot;has the same starting icon&quot; as the next one.  This allows the
-                // window manager to keep the previous window it had previously
-                // created, if it still had one.
-                ActivityRecord prev = mResumedActivity;
-                if (prev != null) {
-                    // We don&apos;t want to reuse the previous starting preview if:
-                    // (1) The current activity is in a different task.
-                    if (prev.task != r.task) {
-                        prev = null;
-                    }
-                    // (2) The current activity is already displayed.
-                    else if (prev.nowVisible) {
-                        prev = null;
-                    }
-                }
-                mWindowManager.setAppStartingWindow(
-                        r.appToken, r.packageName, r.theme,
-                        mService.compatibilityInfoForPackageLocked(
-                                r.info.applicationInfo), r.nonLocalizedLabel,
-                        r.labelRes, r.icon, r.logo, r.windowFlags,
-                        prev != null ? prev.appToken : null, showStartingIcon);
-                r.mStartingWindowShown = true;
-            }
-        } else {
-            // If this is the first activity, don&apos;t do any fancy animations,
-            // because there is nothing for it to animate on top of.
-            mWindowManager.addAppToken(task.mActivities.indexOf(r), r.appToken,
-                    r.task.taskId, mStackId, r.info.screenOrientation, r.fullscreen,
-                    (r.info.flags &amp; ActivityInfo.FLAG_SHOW_FOR_ALL_USERS) != 0, r.userId,
-                    r.info.configChanges, task.voiceSession != null, r.mLaunchTaskBehind);
-            ActivityOptions.abort(options);
-            options = null;
-        }
-        if (VALIDATE_TOKENS) {
-            validateAppTokensLocked();
-        }
+         task = r.task;
 
-        if (doResume) {
-            mStackSupervisor.resumeTopActivitiesLocked(this, r, options);
-        }
-    }
+         // Slot the activity into the history stack and proceed
+         //将activity放入历史堆栈中并继续进行
+         if (DEBUG_ADD_REMOVE) Slog.i(TAG, &quot;Adding activity &quot; + r + &quot; to stack to task &quot; + task,
+                 new RuntimeException(&quot;here&quot;).fillInStackTrace());
+         task.addActivityToTop(r);
+         task.setFrontOfTask();
+
+         r.putInHistory();
+         if (!isHomeStack() || numActivities() &gt; 0) {
+             // We want to show the starting preview window if we are
+             // switching to a new task, or the next activity&apos;s process is
+             // not currently running.
+             boolean showStartingIcon = newTask;
+             ProcessRecord proc = r.app;
+             if (proc == null) {
+                 proc = mService.mProcessNames.get(r.processName, r.info.applicationInfo.uid);
+             }
+             if (proc == null || proc.thread == null) {
+                 showStartingIcon = true;
+             }
+             if (DEBUG_TRANSITION) Slog.v(TAG_TRANSITION,
+                     &quot;Prepare open transition: starting &quot; + r);
+             if ((r.intent.getFlags() &amp; Intent.FLAG_ACTIVITY_NO_ANIMATION) != 0) {
+                 mWindowManager.prepareAppTransition(AppTransition.TRANSIT_NONE, keepCurTransition);
+                 mNoAnimActivities.add(r);
+             } else {
+                 mWindowManager.prepareAppTransition(newTask
+                         ? r.mLaunchTaskBehind
+                                 ? AppTransition.TRANSIT_TASK_OPEN_BEHIND
+                                 : AppTransition.TRANSIT_TASK_OPEN
+                         : AppTransition.TRANSIT_ACTIVITY_OPEN, keepCurTransition);
+                 mNoAnimActivities.remove(r);
+             }
+             mWindowManager.addAppToken(task.mActivities.indexOf(r),
+                     r.appToken, r.task.taskId, mStackId, r.info.screenOrientation, r.fullscreen,
+                     (r.info.flags &amp; ActivityInfo.FLAG_SHOW_FOR_ALL_USERS) != 0, r.userId,
+                     r.info.configChanges, task.voiceSession != null, r.mLaunchTaskBehind);
+             boolean doShow = true;
+             if (newTask) {
+                 // Even though this activity is starting fresh, we still need
+                 // to reset it to make sure we apply affinities to move any
+                 // existing activities from other tasks in to it.
+                 // If the caller has requested that the target task be
+                 // reset, then do so.
+                 if ((r.intent.getFlags() &amp; Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED) != 0) {
+                     resetTaskIfNeededLocked(r, r);
+                     doShow = topRunningNonDelayedActivityLocked(null) == r;
+                 }
+             } else if (options != null &amp;&amp; new ActivityOptions(options).getAnimationType()
+                     == ActivityOptions.ANIM_SCENE_TRANSITION) {
+                 doShow = false;
+             }
+             if (r.mLaunchTaskBehind) {
+                 // Don&apos;t do a starting window for mLaunchTaskBehind. More importantly make sure we
+                 // tell WindowManager that r is visible even though it is at the back of the stack.
+                 mWindowManager.setAppVisibility(r.appToken, true);
+                 ensureActivitiesVisibleLocked(null, 0);
+             } else if (SHOW_APP_STARTING_PREVIEW &amp;&amp; doShow) {
+                 // Figure out if we are transitioning from another activity that is
+                 // &quot;has the same starting icon&quot; as the next one.  This allows the
+                 // window manager to keep the previous window it had previously
+                 // created, if it still had one.
+                 ActivityRecord prev = mResumedActivity;
+                 if (prev != null) {
+                     // We don&apos;t want to reuse the previous starting preview if:
+                     // (1) The current activity is in a different task.
+                     if (prev.task != r.task) {
+                         prev = null;
+                     }
+                     // (2) The current activity is already displayed.
+                     else if (prev.nowVisible) {
+                         prev = null;
+                     }
+                 }
+                 mWindowManager.setAppStartingWindow(
+                         r.appToken, r.packageName, r.theme,
+                         mService.compatibilityInfoForPackageLocked(
+                                 r.info.applicationInfo), r.nonLocalizedLabel,
+                         r.labelRes, r.icon, r.logo, r.windowFlags,
+                         prev != null ? prev.appToken : null, showStartingIcon);
+                 r.mStartingWindowShown = true;
+             }
+         } else {
+             // If this is the first activity, don&apos;t do any fancy animations,
+             // because there is nothing for it to animate on top of.
+             mWindowManager.addAppToken(task.mActivities.indexOf(r), r.appToken,
+                     r.task.taskId, mStackId, r.info.screenOrientation, r.fullscreen,
+                     (r.info.flags &amp; ActivityInfo.FLAG_SHOW_FOR_ALL_USERS) != 0, r.userId,
+                     r.info.configChanges, task.voiceSession != null, r.mLaunchTaskBehind);
+             ActivityOptions.abort(options);
+             options = null;
+         }
+         if (VALIDATE_TOKENS) {
+             validateAppTokensLocked();
+         }
+
+         if (doResume) {
+             mStackSupervisor.resumeTopActivitiesLocked(this, r, options);
+         }
+     }
 </code></pre><p>重点mStackSupervisor.resumeTopActivitiesLocked(this, r, options);</p>
 <p>###转到ActivityStackSupervisor-resumeTopActivitiesLocked  </p>
 
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2018/01/18/ActivityStack-startActivityLocked/" data-id="cjck5aejb0005i9s6fvox4i82" class="article-share-link">Teilen</a>
+      <a data-url="http://yoursite.com/2018/01/18/ActivityStack-startActivityLocked/" data-id="cjcu6hc20000dyws6uv7220ol" class="article-share-link">Teilen</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/ActivityStack-startActivityLocked/">ActivityStack-startActivityLocked</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/ActivityStackSupervisor-resumeTopActivitiesLocked/">ActivityStackSupervisor-resumeTopActivitiesLocked</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/android/">android</a></li></ul>
@@ -310,7 +315,7 @@ final class ActivityStack {}
   <div class="widget-wrap">
     <h3 class="widget-title">Tags</h3>
     <div class="widget">
-      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityManagerNative-getDefault/">ActivityManagerNative-getDefault</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityManagerService-attachApplication/">ActivityManagerService-attachApplication</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityManagerService-startActivity/">ActivityManagerService-startActivity</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityManagerService-startProcessLocked/">ActivityManagerService-startProcessLocked</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityStack-resumeTopActivityLocked/">ActivityStack-resumeTopActivityLocked</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityStack-startActivityLocked/">ActivityStack-startActivityLocked</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityStackSupervisor-attachApplicationLocked/">ActivityStackSupervisor-attachApplicationLocked</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityStackSupervisor-resumeTopActivitiesLocked/">ActivityStackSupervisor-resumeTopActivitiesLocked</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityStackSupervisor-startActivityMayWait/">ActivityStackSupervisor-startActivityMayWait</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityStackSupervisor-startSpecificActivityLocked/">ActivityStackSupervisor-startSpecificActivityLocked</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityStarter-startActivityMayWait/">ActivityStarter-startActivityMayWait</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityThread-main/">ActivityThread-main</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityThread-scheduleLaunchActivity/">ActivityThread-scheduleLaunchActivity</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Instrumentation-callActivityOnCreate/">Instrumentation.callActivityOnCreate</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Process-start/">Process-start</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/android/">android</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/startActivity/">startActivity</a></li></ul>
+      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityInfo/">ActivityInfo</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityManagerNative-getDefault/">ActivityManagerNative-getDefault</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityManagerService-attachApplication/">ActivityManagerService-attachApplication</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityManagerService-startActivity/">ActivityManagerService-startActivity</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityManagerService-startProcessLocked/">ActivityManagerService-startProcessLocked</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityStack-resumeTopActivityLocked/">ActivityStack-resumeTopActivityLocked</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityStack-startActivityLocked/">ActivityStack-startActivityLocked</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityStackSupervisor-attachApplicationLocked/">ActivityStackSupervisor-attachApplicationLocked</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityStackSupervisor-resolveActivity/">ActivityStackSupervisor-resolveActivity</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityStackSupervisor-resumeTopActivitiesLocked/">ActivityStackSupervisor-resumeTopActivitiesLocked</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityStackSupervisor-startActivityMayWait/">ActivityStackSupervisor-startActivityMayWait</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityStackSupervisor-startSpecificActivityLocked/">ActivityStackSupervisor-startSpecificActivityLocked</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityStarter-startActivityMayWait/">ActivityStarter-startActivityMayWait</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityThread-main/">ActivityThread-main</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityThread-scheduleLaunchActivity/">ActivityThread-scheduleLaunchActivity</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Instrumentation-callActivityOnCreate/">Instrumentation.callActivityOnCreate</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Launcher/">Launcher</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/MBProgressHUD/">MBProgressHUD</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/OC/">OC</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Process-start/">Process-start</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/UIAlertController/">UIAlertController</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/UILabel/">UILabel</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/android/">android</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/startActivity/">startActivity</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/权限测试/">权限测试</a></li></ul>
     </div>
   </div>
 
@@ -320,7 +325,7 @@ final class ActivityStack {}
   <div class="widget-wrap">
     <h3 class="widget-title">Tag Cloud</h3>
     <div class="widget tagcloud">
-      <a href="/tags/ActivityManagerNative-getDefault/" style="font-size: 15px;">ActivityManagerNative-getDefault</a> <a href="/tags/ActivityManagerService-attachApplication/" style="font-size: 15px;">ActivityManagerService-attachApplication</a> <a href="/tags/ActivityManagerService-startActivity/" style="font-size: 15px;">ActivityManagerService-startActivity</a> <a href="/tags/ActivityManagerService-startProcessLocked/" style="font-size: 15px;">ActivityManagerService-startProcessLocked</a> <a href="/tags/ActivityStack-resumeTopActivityLocked/" style="font-size: 15px;">ActivityStack-resumeTopActivityLocked</a> <a href="/tags/ActivityStack-startActivityLocked/" style="font-size: 15px;">ActivityStack-startActivityLocked</a> <a href="/tags/ActivityStackSupervisor-attachApplicationLocked/" style="font-size: 15px;">ActivityStackSupervisor-attachApplicationLocked</a> <a href="/tags/ActivityStackSupervisor-resumeTopActivitiesLocked/" style="font-size: 15px;">ActivityStackSupervisor-resumeTopActivitiesLocked</a> <a href="/tags/ActivityStackSupervisor-startActivityMayWait/" style="font-size: 15px;">ActivityStackSupervisor-startActivityMayWait</a> <a href="/tags/ActivityStackSupervisor-startSpecificActivityLocked/" style="font-size: 15px;">ActivityStackSupervisor-startSpecificActivityLocked</a> <a href="/tags/ActivityStarter-startActivityMayWait/" style="font-size: 15px;">ActivityStarter-startActivityMayWait</a> <a href="/tags/ActivityThread-main/" style="font-size: 15px;">ActivityThread-main</a> <a href="/tags/ActivityThread-scheduleLaunchActivity/" style="font-size: 15px;">ActivityThread-scheduleLaunchActivity</a> <a href="/tags/Instrumentation-callActivityOnCreate/" style="font-size: 15px;">Instrumentation.callActivityOnCreate</a> <a href="/tags/Process-start/" style="font-size: 15px;">Process-start</a> <a href="/tags/android/" style="font-size: 20px;">android</a> <a href="/tags/startActivity/" style="font-size: 10px;">startActivity</a>
+      <a href="/tags/ActivityInfo/" style="font-size: 12.5px;">ActivityInfo</a> <a href="/tags/ActivityManagerNative-getDefault/" style="font-size: 12.5px;">ActivityManagerNative-getDefault</a> <a href="/tags/ActivityManagerService-attachApplication/" style="font-size: 12.5px;">ActivityManagerService-attachApplication</a> <a href="/tags/ActivityManagerService-startActivity/" style="font-size: 12.5px;">ActivityManagerService-startActivity</a> <a href="/tags/ActivityManagerService-startProcessLocked/" style="font-size: 12.5px;">ActivityManagerService-startProcessLocked</a> <a href="/tags/ActivityStack-resumeTopActivityLocked/" style="font-size: 12.5px;">ActivityStack-resumeTopActivityLocked</a> <a href="/tags/ActivityStack-startActivityLocked/" style="font-size: 12.5px;">ActivityStack-startActivityLocked</a> <a href="/tags/ActivityStackSupervisor-attachApplicationLocked/" style="font-size: 12.5px;">ActivityStackSupervisor-attachApplicationLocked</a> <a href="/tags/ActivityStackSupervisor-resolveActivity/" style="font-size: 12.5px;">ActivityStackSupervisor-resolveActivity</a> <a href="/tags/ActivityStackSupervisor-resumeTopActivitiesLocked/" style="font-size: 12.5px;">ActivityStackSupervisor-resumeTopActivitiesLocked</a> <a href="/tags/ActivityStackSupervisor-startActivityMayWait/" style="font-size: 17.5px;">ActivityStackSupervisor-startActivityMayWait</a> <a href="/tags/ActivityStackSupervisor-startSpecificActivityLocked/" style="font-size: 12.5px;">ActivityStackSupervisor-startSpecificActivityLocked</a> <a href="/tags/ActivityStarter-startActivityMayWait/" style="font-size: 12.5px;">ActivityStarter-startActivityMayWait</a> <a href="/tags/ActivityThread-main/" style="font-size: 12.5px;">ActivityThread-main</a> <a href="/tags/ActivityThread-scheduleLaunchActivity/" style="font-size: 12.5px;">ActivityThread-scheduleLaunchActivity</a> <a href="/tags/Instrumentation-callActivityOnCreate/" style="font-size: 12.5px;">Instrumentation.callActivityOnCreate</a> <a href="/tags/Launcher/" style="font-size: 10px;">Launcher</a> <a href="/tags/MBProgressHUD/" style="font-size: 10px;">MBProgressHUD</a> <a href="/tags/OC/" style="font-size: 15px;">OC</a> <a href="/tags/Process-start/" style="font-size: 12.5px;">Process-start</a> <a href="/tags/UIAlertController/" style="font-size: 10px;">UIAlertController</a> <a href="/tags/UILabel/" style="font-size: 10px;">UILabel</a> <a href="/tags/android/" style="font-size: 20px;">android</a> <a href="/tags/startActivity/" style="font-size: 10px;">startActivity</a> <a href="/tags/权限测试/" style="font-size: 10px;">权限测试</a>
     </div>
   </div>
 
@@ -342,23 +347,23 @@ final class ActivityStack {}
       <ul>
         
           <li>
-            <a href="/2018/01/18/Instrumentation-callActivityOnCreate/">Instrumentation.callActivityOnCreate</a>
+            <a href="/2018/01/25/OC-MBProgressHUD使用/">OC-MBProgressHUD使用</a>
           </li>
         
           <li>
-            <a href="/2018/01/18/ActivityThread-scheduleLaunchActivity/">ActivityThread-scheduleLaunchActivity </a>
+            <a href="/2018/01/25/OC-对话框/">OC-对话框</a>
           </li>
         
           <li>
-            <a href="/2018/01/18/ActivityStackSupervisor-attachApplicationLocked/">ActivityStackSupervisor-attachApplicationLocked</a>
+            <a href="/2018/01/25/OC-UILabel点击事件/">OC-UILabel点击事件</a>
           </li>
         
           <li>
-            <a href="/2018/01/18/ActivityManagerService-attachApplication/">ActivityManagerService-attachApplication</a>
+            <a href="/2018/01/22/launcher-启动Main/">launcher 启动Main</a>
           </li>
         
           <li>
-            <a href="/2018/01/18/ActivityThread-main/">ActivityThread-main</a>
+            <a href="/2018/01/19/ActivityStackSupervisor-resolveActivity/">ActivityStackSupervisor-resolveActivity</a>
           </li>
         
       </ul>

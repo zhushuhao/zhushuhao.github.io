@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+
+  
+  <title>小代码 大世界</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta property="og:type" content="website">
+<meta property="og:title" content="小代码 大世界">
+<meta property="og:url" content="http://yoursite.com/page/3/index.html">
+<meta property="og:site_name" content="小代码 大世界">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="小代码 大世界">
+  
+    <link rel="alternate" href="/atom.xml" title="小代码 大世界" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">小代码 大世界</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Suche"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://yoursite.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main">
+  
+    <article id="post-ActivityManagerService-startActivity" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2018/01/18/ActivityManagerService-startActivity/" class="article-date">
+  <time datetime="2018-01-18T02:24:35.000Z" itemprop="datePublished">2018-01-18</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2018/01/18/ActivityManagerService-startActivity/">ActivityManagerService-startActivity</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>###源码位置com.android.server.am.ActivityManagerService.java</p>
+<pre><code>public final class ActivityManagerService extends ActivityManagerNative
+    implements Watchdog.Monitor, BatteryStatsImpl.BatteryCallback {}
+
+ActivityManagerService.java继承了ActivityManagerNative,而ActivityManagerNative实现了
+IActivityManager的接口
+</code></pre><p>查看startActivity方法</p>
+<pre><code>//caller 调用的主线程
+//callingPackage 包名
+//intent
+//resolvedType
+//resultTo
+//resultWho
+//requestCode
+//startFlags
+//profilerInfo
+//bOptions
+
+ @Override
+     public final int startActivity(IApplicationThread caller, String callingPackage,
+             Intent intent, String resolvedType, IBinder resultTo, String resultWho, int requestCode,
+             int startFlags, ProfilerInfo profilerInfo, Bundle options) {
+         return startActivityAsUser(caller, callingPackage, intent, resolvedType, resultTo,
+             resultWho, requestCode, startFlags, profilerInfo, options,
+             UserHandle.getCallingUserId());
+     }
+</code></pre><p>接着调用了startActivityAsUser方法,多传入了一个int类型的userId参数<br>总得来说startActivityAsUser就是做一下调用者的基本权限的检查</p>
+<pre><code>@Override
+   public final int startActivityAsUser(IApplicationThread caller, String callingPackage,
+           Intent intent, String resolvedType, IBinder resultTo, String resultWho, int requestCode,
+           int startFlags, ProfilerInfo profilerInfo, Bundle options, int userId) {
+       //检查调用者是否被隔离，如果被隔离会抛出SecurityException。
+       enforceNotIsolatedCaller(&quot;startActivity&quot;);
+       //检查调用者是否有权限执行call操作
+       userId = handleIncomingUser(Binder.getCallingPid(), Binder.getCallingUid(), userId,
+               false, ALLOW_FULL_ONLY, &quot;startActivity&quot;, null);
+
+       // TODO: Switch to user app stacks here.
+
+       return mStackSupervisor.startActivityMayWait(caller, -1, callingPackage, intent,
+               resolvedType, null, null, resultTo, resultWho, requestCode, startFlags,
+               profilerInfo, null, null, options, false, userId, null, null);
+   }
+</code></pre><p>####SDK23会走这里 接着又调用了ActivityStackSupervisor-startActivityMayWait方法,先走API23这个流程</p>
+<p>####SDK25会走这里 接着又调用了ActivityStarter-startActivityMayWait方法，以后再说</p>
+<p>###参考资料</p>
+<p>####<a href="http://blog.csdn.net/chenkai19920410/article/details/54344295" target="_blank" rel="noopener">http://blog.csdn.net/chenkai19920410/article/details/54344295</a></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2018/01/18/ActivityManagerService-startActivity/" data-id="cjcu6hc1m0005yws633hg7mid" class="article-share-link">Teilen</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/ActivityManagerService-startActivity/">ActivityManagerService-startActivity</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/ActivityStackSupervisor-startActivityMayWait/">ActivityStackSupervisor-startActivityMayWait</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/ActivityStarter-startActivityMayWait/">ActivityStarter-startActivityMayWait</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/android/">android</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+    <article id="post-ActivityManagerNative-getDefault" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2018/01/18/ActivityManagerNative-getDefault/" class="article-date">
+  <time datetime="2018-01-18T01:53:16.000Z" itemprop="datePublished">2018-01-18</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2018/01/18/ActivityManagerNative-getDefault/">ActivityManagerNative-getDefault</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>源码位置 </p>
+<p>  android.app.ActivityManagerNative.java</p>
+<pre><code>public abstract class ActivityManagerNative extends Binder 
+implements IActivityManager{}
+
+ActivityManagerNative是一个抽象类,继承了Binder类，实现了IActivityManager接口
+ActivityManagerService是它的子类，也就实现了IActivityManager接口，
+下面的ActivityManagerProxy类也实现了IActivityManager接口
+</code></pre><p>getDefault()方法, 最终得到的是一个ActivityManagerProxy对象</p>
+<pre><code>static public IActivityManager getDefault() {
+    return gDefault.get();
+}
+</code></pre><p>查看gDefault</p>
+<pre><code>private static final Singleton&lt;IActivityManager&gt; gDefault = new Singleton&lt;IActivityManager&gt;() {
+        protected IActivityManager create() {
+
+           //获取到ActivityManagerService的Binder
+            IBinder b = ServiceManager.getService(&quot;activity&quot;);
+
+            if (false) {
+                Log.v(&quot;ActivityManager&quot;, &quot;default service binder = &quot; + b);
+            }
+
+            //得到一个ActivityManagerProxy对象
+            IActivityManager am = asInterface(b);
+            if (false) {
+                Log.v(&quot;ActivityManager&quot;, &quot;default service = &quot; + am);
+            }
+            return am;
+        }
+    };
+</code></pre><p>查看asInterface方法,返回了一个ActivityManagerProxy对象</p>
+<pre><code>  /**
+    * Cast a Binder object into an activity manager interface, generating
+    * a proxy if needed.
+    * 把一个Binder对象强转为一个activity manger 接口，生成一个代理对象
+    */
+static public IActivityManager asInterface(IBinder obj) {
+       if (obj == null) {
+           return null;
+       }
+
+        //String descriptor  = &quot;android.app.IActivityManager&quot;;
+
+       IActivityManager in =
+           (IActivityManager)obj.queryLocalInterface(descriptor);
+
+       if (in != null) {
+           return in;
+       }
+       //返回了一个ActivityManagerProxy
+
+       return new ActivityManagerProxy(obj);
+
+   }
+</code></pre><p>查看queryLocalInterface方法</p>
+<pre><code>/**
+ * Attempt to retrieve a local implementation of an interface
+ * for this Binder object.  If null is returned, you will need
+ * to instantiate a proxy class to marshall calls through
+ * the transact() method.
+ *    尝试为这个binder对象取出一个本地接口实现。如果返回null,你需要通过transaction()实例化一个代理对象
+ *    引领调用命令
+ *
+ */
+public IInterface queryLocalInterface(String descriptor);
+</code></pre><p>android.os.Binder.java,实现了IBinder接口</p>
+<pre><code>/**
+  * Use information supplied to attachInterface() to return the
+  * associated IInterface if it matches the requested
+  * descriptor.
+  */
+ public IInterface queryLocalInterface(String descriptor) {
+     if (mDescriptor.equals(descriptor)) {
+         return mOwner;
+     }
+     return null;
+ }
+</code></pre><p>查看attachInterface()方法</p>
+<pre><code>/**
+ * Convenience method for associating a specific interface with the Binder.
+ * After calling, queryLocalInterface() will be implemented for you
+ * to return the given owner IInterface when the corresponding
+ * descriptor is requested.
+ 这个方法把一个特定的接口和Binder关联在一起。调用这个方法之后，queryLocalInterface() 会被实现，然后当相关的descriptor
+ 被请求的时候，你就可以把owner IInterface返回给他
+ */
+public void attachInterface(IInterface owner, String descriptor) {
+    mOwner = owner;
+    mDescriptor = descriptor;
+}
+</code></pre><p>最后查看ActivityManagerProxy类,这是ActivityManagerNative的内部类。它实现了IActivityManager接口，<br>通过Binder通信，最终会调用ActivityManagerService里面的类似startActivity等等的方法</p>
+<pre><code>class ActivityManagerProxy implements IActivityManager
+{
+    public ActivityManagerProxy(IBinder remote)
+    {
+        mRemote = remote;
+    }
+
+    public IBinder asBinder()
+    {
+        return mRemote;
+    }
+
+    public int startActivity(IApplicationThread caller, String callingPackage, Intent intent,
+            String resolvedType, IBinder resultTo, String resultWho, int requestCode,
+            int startFlags, ProfilerInfo profilerInfo, Bundle options) throws RemoteException {
+        Parcel data = Parcel.obtain();
+        Parcel reply = Parcel.obtain();
+        data.writeInterfaceToken(IActivityManager.descriptor);
+        data.writeStrongBinder(caller != null ? caller.asBinder() : null);
+        data.writeString(callingPackage);
+        intent.writeToParcel(data, 0);
+        data.writeString(resolvedType);
+        data.writeStrongBinder(resultTo);
+        data.writeString(resultWho);
+        data.writeInt(requestCode);
+        data.writeInt(startFlags);
+        if (profilerInfo != null) {
+            data.writeInt(1);
+            profilerInfo.writeToParcel(data, Parcelable.PARCELABLE_WRITE_RETURN_VALUE);
+        } else {
+            data.writeInt(0);
+        }
+        if (options != null) {
+            data.writeInt(1);
+            options.writeToParcel(data, 0);
+        } else {
+            data.writeInt(0);
+        }
+        mRemote.transact(START_ACTIVITY_TRANSACTION, data, reply, 0);
+        reply.readException();
+        int result = reply.readInt();
+        reply.recycle();
+        data.recycle();
+        return result;
+    }
+
+    ...
+}
+</code></pre><p>###转到ActivityManagerService-startActivity</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2018/01/18/ActivityManagerNative-getDefault/" data-id="cjcu6hc100000yws6uy5oohr6" class="article-share-link">Teilen</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/ActivityManagerNative-getDefault/">ActivityManagerNative-getDefault</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/ActivityManagerService-startActivity/">ActivityManagerService-startActivity</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/android/">android</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+    <article id="post-Instrumentation-execStartActivity" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2018/01/17/Instrumentation-execStartActivity/" class="article-date">
+  <time datetime="2018-01-17T10:22:14.000Z" itemprop="datePublished">2018-01-17</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2018/01/17/Instrumentation-execStartActivity/">Instrumentation.execStartActivity</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>Instrumentation这个类，用来做测试。关于这个类，源码是这样介绍的：</p>
+<pre><code>/**
+ * Base class for implementing application instrumentation code.  When running
+ * with instrumentation turned on, this class will be instantiated for you
+ * before any of the application code, allowing you to monitor all of the
+ * interaction the system has with the application.  An Instrumentation
+ * implementation is described to the system through an AndroidManifest.xml&apos;s
+ * &amp;lt;instrumentation&amp;gt; tag.
+ */
+
+ 网上翻译意思大概是这样的：
+
+ 用于实现应用程序代码的基类。当使用仪器进行运行时，该类将在任何应用程序代码之前为您实例化，
+ 允许您监视系统与应用程序之间的所有交互。Instrumentation的实现类在AndroidManifest.xml通过
+ &lt;instrumentation&gt;进行声明。
+
+ 也就是说系统通过这个方法，给我们监控app的代码执行提供了一个入口。
+</code></pre><p>我们来看execStartActivity方法  </p>
+<pre><code>/**
+* Execute a startActivity call made by the application.  The default 
+* implementation takes care of updating any active {@link ActivityMonitor}
+* objects and dispatches this call to the system activity manager; you can
+* override this to watch for the application to start an activity, and 
+* modify what happens when it does. 
+
+执行由应用程序调用的startActivity方法。默认的实现负责更新任何活动对象，
+并将此调用发送给系统活动管理器；您可以覆盖此项以监视启动活动的应用程序，
+以及修改当它发生时会发生什么。
+
+*
+* &lt;p&gt;This method returns an {@link ActivityResult} object, which you can 
+* use when intercepting application calls to avoid performing the start 
+* activity action but still return the result the application is 
+* expecting.  To do this, override this method to catch the call to start 
+* activity so that it returns a new ActivityResult containing the results 
+* you would like the application to see, and don&apos;t call up to the super 
+* class.  Note that an application is only expecting a result if 
+* &lt;var&gt;requestCode&lt;/var&gt; is &amp;gt;= 0.
+*
+这个方法返回一个Activityresult对象.
+您可以在拦截应用程序调用时使用它，以避免执行启动活动操作，但仍然返回应用程序期望的结果。
+为此，重写此方法以捕捉start activity的调用，它返回一个新的Activityresult,
+含有结果你想看到的应用程序,而不调用父类。注意，应用只在requestCode&gt;0时需要一个结果.
+
+* &lt;p&gt;This method throws {@link android.content.ActivityNotFoundException}
+* if there was no Activity found to run the given Intent.
+*
+这个方法如果找不到指定的Activity会抛出android.content.ActivityNotFoundException异常
+
+* @param who The Context from which the activity is being started.
+* @param contextThread The main thread of the Context from which the activity
+*                      is being started.
+* @param token Internal token identifying to the system who is starting 
+*              the activity; may be null.
+* @param target Which activity is performing the start (and thus receiving 
+*               any result); may be null if this call is not being made
+*               from an activity.
+* @param intent The actual Intent to start.
+* @param requestCode Identifier for this request&apos;s result; less than zero 
+*                    if the caller is not expecting a result.
+* @param options Addition options.
+*
+* @return To force the return of a particular result, return an 
+*         ActivityResult object containing the desired data; otherwise
+*         return null.  The default implementation always returns null.
+*
+* @throws android.content.ActivityNotFoundException
+*
+* @see Activity#startActivity(Intent)
+* @see Activity#startActivityForResult(Intent, int)
+* @see Activity#startActivityFromChild
+*
+* {@hide}
+*/
+
+该对象是在ActivityThread创建Activity时创建的，一个应用程序中只有一个Instrumentation对象，
+每个Activity内部都有一个该对象的引用。Instrumentation可以理解为应用进程的管家，
+ActivityThread要创建或者暂停某个Activity时，是通过这个&quot;管家&quot;进行的，
+设置这个管家的好处是可以统计所有的&quot;开销&quot;，开销的信息保存在&quot;管家&quot;那里。
+其实正如其名称所示，Instrumentation就是为了&quot;测量&quot;、&quot;统计&quot;，
+因为管家掌握了所有的&quot;开销&quot;，自然也就具有了统计的功能。
+当然，Instrumentation类和ActivityThread的分工是有本质区别的，
+后者就像是这个家里的主人，负责创建这个&quot;家庭&quot;，并负责和外界打交道，比如接收AmS的通知等。
+</code></pre><p>   看一下execStartActivity的代码</p>
+<pre><code>public ActivityResult execStartActivity(
+            Context who, IBinder contextThread, IBinder token, Activity target,
+            Intent intent, int requestCode, Bundle options) {
+        IApplicationThread whoThread = (IApplicationThread) contextThread;
+        Uri referrer = target != null ? target.onProvideReferrer() : null;
+        if (referrer != null) {
+            intent.putExtra(Intent.EXTRA_REFERRER, referrer);
+        }
+        if (mActivityMonitors != null) {
+            synchronized (mSync) {
+                final int N = mActivityMonitors.size();
+                for (int i=0; i&lt;N; i++) {
+                    final ActivityMonitor am = mActivityMonitors.get(i);
+                    if (am.match(who, null, intent)) {
+                        am.mHits++;
+                        if (am.isBlocking()) {
+                            return requestCode &gt;= 0 ? am.getResult() : null;
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+        try {
+            intent.migrateExtraStreamToClipData();
+            intent.prepareToLeaveProcess();
+            int result = ActivityManagerNative.getDefault()
+                .startActivity(whoThread, who.getBasePackageName(), intent,
+                        intent.resolveTypeIfNeeded(who.getContentResolver()),
+                        token, target != null ? target.mEmbeddedID : null,
+                        requestCode, 0, null, options);
+            checkStartActivityResult(result, intent);
+        } catch (RemoteException e) {
+            throw new RuntimeException(&quot;Failure from system&quot;, e);
+        }
+        return null;
+    }
+</code></pre><p>   看这里</p>
+<pre><code>int result = ActivityManagerNative.getDefault()
+               .startActivity(whoThread, who.getBasePackageName(), intent,
+                       intent.resolveTypeIfNeeded(who.getContentResolver()),
+                       token, target != null ? target.mEmbeddedID : null,
+                       requestCode, 0, null, options);
+这里ActivityManagerNative.getDefault()返回了ActivityManagerProxy对象，ActivityManagerProxy通过Binder通信
+最终会调用ActivityManagerService.java中的startActivity方法
+</code></pre><p>  转到ActivityManagerNative-getDefault</p>
+<p>###参考资料</p>
+<p>####<a href="https://www.cnblogs.com/itpepe/p/4756328.html" target="_blank" rel="noopener">https://www.cnblogs.com/itpepe/p/4756328.html</a></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2018/01/17/Instrumentation-execStartActivity/" data-id="cjcu6hc2h000kyws6h1cxunmt" class="article-share-link">Teilen</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/ActivityManagerNative-getDefault/">ActivityManagerNative-getDefault</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/android/">android</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+    <article id="post-activity启动" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2018/01/16/activity启动/" class="article-date">
+  <time datetime="2018-01-16T10:43:48.000Z" itemprop="datePublished">2018-01-16</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2018/01/16/activity启动/">activity启动</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>#API23</p>
+<p>   从第一次调用startActivity开始</p>
+<pre><code>startActivity(intent);
+startActivity(intent,null);
+startActivityForResult(intent,-1);
+startActivityForResult(intent,-1,null);
+
+android.app.Instrumentation.java-&gt;execStartActivity()
+这里调用了ActivityManagerNative.getDefault().startActivity-&gt;ActivityManagerProxy.startActivity方法
+-&gt;通过Binder最终调用ActivityManagerService.startActivity
+
+ActivityManagerService.java-&gt;startActivity()
+添加了callingUserId参数，调用ActivityManagerService.startActivityAsUser
+ActivityManagerService.java-&gt;startActivityAsUser()
+获取了userId,加入了几个参数，调用ActivityStackSupervisor.startActivityMayWait
+
+
+ActivityStackSupervisor.java-&gt;startActivityMayWait()
+方法里面有synchronized同步语句块,所以可能等待MayWait,然后调用startActivityLocked
+ActivityStackSupervisor.java-&gt;startActivityLocked()
+ActivityStackSupervisor.java-&gt;startActivityUncheckedLocked()
+
+ActivityStack.java-&gt;startActivityLocked()
+
+ActivityStackSupervisor.java-&gt;resumeTopActivitiesLocked()
+
+ActivityStack.java-&gt;resumeTopActivityLocked()
+ActivityStack.java-&gt;resumeTopActivityInnerLocked()
+
+ActivityStackSupervisor.java-&gt;startSpecificActivityLocked()
+
+ActivityManagerService.java-&gt;startProcessLocked();
+
+android.os.Process.java-&gt;start()-&gt;startViaZygote()
+android.os.Process.java-&gt;zygoteSendArgsAndGetResult()
+</code></pre><p>   通过Zygote孵化了一个ActivityThread,去查看ActivityThread的main方法,转到ActivityThread-main</p>
+<pre><code>android.app.ActivityThread.java-&gt;main()
+android.app.ActivityThread.java-&gt;attach()
+
+ActivityManagerService.java-&gt;attachApplication()
+
+ActivityStackSupervisor.java-&gt;attachApplicationLocked()
+ActivityStackSupervisor.java-&gt;realStartActivityLocked()
+
+ActivityThread.java-&gt;scheduleLaunchActivity()
+ActivityThread.java-&gt;handleLaunchActivity()
+ActivityThread.java-&gt;performLaunchActivity()
+
+Instrumentation-&gt;callActivityOnCreate()
+
+Activity-&gt;performCreate()
+</code></pre><p>   走到这里就执行了onCreate();</p>
+<p>com.android.server.am.ActivityStackSupervisor.java<br>android.app.Instrumentation.java<br>com.android.server.am.ActivityManagerService.java<br>com.android.server.am.ActivityStack.java<br>android.app.ActivityThread.java</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2018/01/16/activity启动/" data-id="cjcu6hc2s000yyws612poke53" class="article-share-link">Teilen</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/android/">android</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/startActivity/">startActivity</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+
+
+  <nav id="page-nav">
+    
+    <a class="extend prev" rel="prev" href="/page/2/">&laquo; zurück</a><a class="page-number" href="/">1</a><a class="page-number" href="/page/2/">2</a><span class="page-number current">3</span>
+  </nav>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tags</h3>
+    <div class="widget">
+      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityInfo/">ActivityInfo</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityManagerNative-getDefault/">ActivityManagerNative-getDefault</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityManagerService-attachApplication/">ActivityManagerService-attachApplication</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityManagerService-startActivity/">ActivityManagerService-startActivity</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityManagerService-startProcessLocked/">ActivityManagerService-startProcessLocked</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityStack-resumeTopActivityLocked/">ActivityStack-resumeTopActivityLocked</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityStack-startActivityLocked/">ActivityStack-startActivityLocked</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityStackSupervisor-attachApplicationLocked/">ActivityStackSupervisor-attachApplicationLocked</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityStackSupervisor-resolveActivity/">ActivityStackSupervisor-resolveActivity</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityStackSupervisor-resumeTopActivitiesLocked/">ActivityStackSupervisor-resumeTopActivitiesLocked</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityStackSupervisor-startActivityMayWait/">ActivityStackSupervisor-startActivityMayWait</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityStackSupervisor-startSpecificActivityLocked/">ActivityStackSupervisor-startSpecificActivityLocked</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityStarter-startActivityMayWait/">ActivityStarter-startActivityMayWait</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityThread-main/">ActivityThread-main</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityThread-scheduleLaunchActivity/">ActivityThread-scheduleLaunchActivity</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Instrumentation-callActivityOnCreate/">Instrumentation.callActivityOnCreate</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Launcher/">Launcher</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/MBProgressHUD/">MBProgressHUD</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/OC/">OC</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Process-start/">Process-start</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/UIAlertController/">UIAlertController</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/UILabel/">UILabel</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/android/">android</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/startActivity/">startActivity</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/权限测试/">权限测试</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/ActivityInfo/" style="font-size: 12.5px;">ActivityInfo</a> <a href="/tags/ActivityManagerNative-getDefault/" style="font-size: 12.5px;">ActivityManagerNative-getDefault</a> <a href="/tags/ActivityManagerService-attachApplication/" style="font-size: 12.5px;">ActivityManagerService-attachApplication</a> <a href="/tags/ActivityManagerService-startActivity/" style="font-size: 12.5px;">ActivityManagerService-startActivity</a> <a href="/tags/ActivityManagerService-startProcessLocked/" style="font-size: 12.5px;">ActivityManagerService-startProcessLocked</a> <a href="/tags/ActivityStack-resumeTopActivityLocked/" style="font-size: 12.5px;">ActivityStack-resumeTopActivityLocked</a> <a href="/tags/ActivityStack-startActivityLocked/" style="font-size: 12.5px;">ActivityStack-startActivityLocked</a> <a href="/tags/ActivityStackSupervisor-attachApplicationLocked/" style="font-size: 12.5px;">ActivityStackSupervisor-attachApplicationLocked</a> <a href="/tags/ActivityStackSupervisor-resolveActivity/" style="font-size: 12.5px;">ActivityStackSupervisor-resolveActivity</a> <a href="/tags/ActivityStackSupervisor-resumeTopActivitiesLocked/" style="font-size: 12.5px;">ActivityStackSupervisor-resumeTopActivitiesLocked</a> <a href="/tags/ActivityStackSupervisor-startActivityMayWait/" style="font-size: 17.5px;">ActivityStackSupervisor-startActivityMayWait</a> <a href="/tags/ActivityStackSupervisor-startSpecificActivityLocked/" style="font-size: 12.5px;">ActivityStackSupervisor-startSpecificActivityLocked</a> <a href="/tags/ActivityStarter-startActivityMayWait/" style="font-size: 12.5px;">ActivityStarter-startActivityMayWait</a> <a href="/tags/ActivityThread-main/" style="font-size: 12.5px;">ActivityThread-main</a> <a href="/tags/ActivityThread-scheduleLaunchActivity/" style="font-size: 12.5px;">ActivityThread-scheduleLaunchActivity</a> <a href="/tags/Instrumentation-callActivityOnCreate/" style="font-size: 12.5px;">Instrumentation.callActivityOnCreate</a> <a href="/tags/Launcher/" style="font-size: 10px;">Launcher</a> <a href="/tags/MBProgressHUD/" style="font-size: 10px;">MBProgressHUD</a> <a href="/tags/OC/" style="font-size: 15px;">OC</a> <a href="/tags/Process-start/" style="font-size: 12.5px;">Process-start</a> <a href="/tags/UIAlertController/" style="font-size: 10px;">UIAlertController</a> <a href="/tags/UILabel/" style="font-size: 10px;">UILabel</a> <a href="/tags/android/" style="font-size: 20px;">android</a> <a href="/tags/startActivity/" style="font-size: 10px;">startActivity</a> <a href="/tags/权限测试/" style="font-size: 10px;">权限测试</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archiv</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/01/">January 2018</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">letzter Beitrag</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2018/01/25/OC-MBProgressHUD使用/">OC-MBProgressHUD使用</a>
+          </li>
+        
+          <li>
+            <a href="/2018/01/25/OC-对话框/">OC-对话框</a>
+          </li>
+        
+          <li>
+            <a href="/2018/01/25/OC-UILabel点击事件/">OC-UILabel点击事件</a>
+          </li>
+        
+          <li>
+            <a href="/2018/01/22/launcher-启动Main/">launcher 启动Main</a>
+          </li>
+        
+          <li>
+            <a href="/2018/01/19/ActivityStackSupervisor-resolveActivity/">ActivityStackSupervisor-resolveActivity</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2018 zhushuhao<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+
+
+  </div>
+</body>
+</html>

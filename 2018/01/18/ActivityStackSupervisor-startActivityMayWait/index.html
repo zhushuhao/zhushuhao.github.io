@@ -7,17 +7,17 @@
   
   <title>ActivityStackSupervisor-startActivityMayWait | 小代码 大世界</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="###源码位置com.android.server.am.ActivityStackSupervisor.java public final class ActivityStackSupervisor implements DisplayListener {} ActivityStackSupervisor只实现了一个DisplayListener接口 查看startActivityMayWait">
-<meta name="keywords" content="android,ActivityStackSupervisor-startActivityMayWait,ActivityStack-startActivityLocked">
+  <meta name="description" content="###源码位置com.android.server.am.ActivityStackSupervisor.java    ActivityStackSupervisor-&amp;gt;Activity栈的管理者,管理Activity栈 public final class ActivityStackSupervisor implements DisplayListener {} ActivityStac">
+<meta name="keywords" content="android,ActivityStackSupervisor-startActivityMayWait,ActivityInfo,ActivityStackSupervisor-resolveActivity,ActivityStack-startActivityLocked">
 <meta property="og:type" content="article">
 <meta property="og:title" content="ActivityStackSupervisor-startActivityMayWait">
 <meta property="og:url" content="http://yoursite.com/2018/01/18/ActivityStackSupervisor-startActivityMayWait/index.html">
 <meta property="og:site_name" content="小代码 大世界">
-<meta property="og:description" content="###源码位置com.android.server.am.ActivityStackSupervisor.java public final class ActivityStackSupervisor implements DisplayListener {} ActivityStackSupervisor只实现了一个DisplayListener接口 查看startActivityMayWait">
-<meta property="og:updated_time" content="2018-01-18T06:35:16.838Z">
+<meta property="og:description" content="###源码位置com.android.server.am.ActivityStackSupervisor.java    ActivityStackSupervisor-&amp;gt;Activity栈的管理者,管理Activity栈 public final class ActivityStackSupervisor implements DisplayListener {} ActivityStac">
+<meta property="og:updated_time" content="2018-01-22T07:03:46.682Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="ActivityStackSupervisor-startActivityMayWait">
-<meta name="twitter:description" content="###源码位置com.android.server.am.ActivityStackSupervisor.java public final class ActivityStackSupervisor implements DisplayListener {} ActivityStackSupervisor只实现了一个DisplayListener接口 查看startActivityMayWait">
+<meta name="twitter:description" content="###源码位置com.android.server.am.ActivityStackSupervisor.java    ActivityStackSupervisor-&amp;gt;Activity栈的管理者,管理Activity栈 public final class ActivityStackSupervisor implements DisplayListener {} ActivityStac">
   
     <link rel="alternate" href="/atom.xml" title="小代码 大世界" type="application/atom+xml">
   
@@ -86,37 +86,63 @@
     
     <div class="article-entry" itemprop="articleBody">
       
-        <p>###源码位置com.android.server.am.ActivityStackSupervisor.java</p>
+        <p>###源码位置com.android.server.am.ActivityStackSupervisor.java<br>    ActivityStackSupervisor-&gt;Activity栈的管理者,管理Activity栈</p>
 <pre><code>public final class ActivityStackSupervisor implements DisplayListener {}
 ActivityStackSupervisor只实现了一个DisplayListener接口
-</code></pre><p>查看startActivityMayWait方法</p>
-<pre><code>    final int startActivityMayWait(IApplicationThread caller, int callingUid,
+</code></pre><p>查看startActivityMayWait方法,</p>
+<p>问题1-&gt;”文件描述符泄漏是会抛出一个IllegalArgumentException，这个异常被谁捕捉了？”</p>
+<p>问题2-&gt;”</p>
+<pre><code>    首先，startActivityMayWait要读取一些信息。从4.4开始，
+    这部分逻辑写到resolveActivity方法中，
+    它会调用PackageManagerService的resolveIntent方法。
+    这个方法会先调用queryIntentActivities方法出查询相关的列表，
+    然后再调用chooseBestActivity方法去选择。为了不影响主线，这些支线内容后面再讲。
+    主线往下走，进入startActivityLocked。Locked意思是调用者需要保证加锁保护，
+    不能重复调用，在startActivityMayWait中，
+    是采用mService对象，也就是构造ActivityStackSupervisor时传进来的ActivityManagerService的对象。
+    调用成功了之后，如果需要wait，就让mService.wait()去等待吧。新Activity还在征途上。
+
+    final int startActivityMayWait(IApplicationThread caller, int callingUid,
         String callingPackage, Intent intent, String resolvedType,
         IVoiceInteractionSession voiceSession, IVoiceInteractor voiceInteractor,
         IBinder resultTo, String resultWho, int requestCode, int startFlags,
         ProfilerInfo profilerInfo, WaitResult outResult, Configuration config,
         Bundle options, boolean ignoreTargetSecurity, int userId,
         IActivityContainer iContainer, TaskRecord inTask) {
-    // Refuse possible leaked file descriptors
+
+    // Refuse possible leaked file descriptors、
+    //拒绝可能泄露的文件描述符
     if (intent != null &amp;&amp; intent.hasFileDescriptors()) {
+        //如果泄漏，那么抛出IllegalArgumentException
         throw new IllegalArgumentException(&quot;File descriptors passed in Intent&quot;);
     }
+
+    //是否指定了component
     boolean componentSpecified = intent.getComponent() != null;
 
     // Don&apos;t modify the client&apos;s object!
+    //不要修改客户端的对象!
+    //根据intent新建一个intent
     intent = new Intent(intent);
 
     // Collect information about the target of the Intent.
+    //收集intent的相关信息,得到一个ActivityInfo对象
     ActivityInfo aInfo =
             resolveActivity(intent, resolvedType, startFlags, profilerInfo, userId);
 
     ActivityContainer container = (ActivityContainer)iContainer;
+
+    //互斥锁锁住ActivityManagerService的实例mService
     synchronized (mService) {
+        //这里的ParentActivity指的是类似TabActivity、ActivityGroup关系的嵌套Activity。
+        之所以要强调parent和child，是要避免混乱的Activity嵌套关系。
         if (container != null &amp;&amp; container.mParentActivity != null &amp;&amp;
                 container.mParentActivity.state != RESUMED) {
             // Cannot start a child activity if the parent is not resumed.
             return ActivityManager.START_CANCELED;
         }
+
+        //获取callingUid和callingPid
         final int realCallingPid = Binder.getCallingPid();
         final int realCallingUid = Binder.getCallingUid();
         int callingPid;
@@ -140,6 +166,14 @@ ActivityStackSupervisor只实现了一个DisplayListener接口
                 &quot;Starting activity when config will change = &quot; + stack.mConfigWillChange);
 
         final long origId = Binder.clearCallingIdentity();
+
+
+
+        如果解析的ActivityInfo不为空，且ApplicationInfo有ApplicationInfo.PRIVATE_FLAG_CANT_SAVE_STATE标记，
+        意味着调用者App是属于heavy-weight process，该标记可以在AndroidManifest.xml中设置，
+        它是用于声明App是否享受系统提供的Activity状态保存/恢复功能的。但是似乎没有App能成为heavy-weight process，
+        因为PackageParser的parseApplication方法并不会解析该标签。
+        也就是这么一大段实际上是不执行的.
 
         if (aInfo != null &amp;&amp;
                 (aInfo.applicationInfo.privateFlags
@@ -270,8 +304,20 @@ ActivityStackSupervisor只实现了一个DisplayListener接口
              requestCode, callingPid, callingUid, callingPackage,
              realCallingPid, realCallingUid, startFlags, options, ignoreTargetSecurity,
              componentSpecified, null, container, inTask);  
-</code></pre><p>查看startActivityLocked方法</p>
-<pre><code>final int startActivityLocked(IApplicationThread caller,
+</code></pre><p>查看startActivityLocked方法<br>带Locked意思是要求同步，因为方法中会操作临界资源。</p>
+<pre><code>    IApplicationThread caller：Launcher Activity的进程内的ApplicationThread对象
+    Intent intent:要启动B的Intent
+    String resolvedType：B Activity的MIME TYPE
+    ActivityInfo aInfo：B Activity的ActivityInfo
+    IBinder resultTo：Launcher activity的token
+    String resultWho：Launcher Activity的mEmbbedID，唯一标示这个Activity
+    int requestCode：startActivityForResult传入
+    int callingPid：调用者的PID
+    int callingUid：调用者的UID
+    int startFlags：0
+    Bundle options：由Launcher传入的，一般为NULL
+    boolean componentSpecified：如果Intent的Component不为空的话，那么就为ture                
+final int startActivityLocked(IApplicationThread caller,
             Intent intent, String resolvedType, ActivityInfo aInfo,
             IVoiceInteractionSession voiceSession, IVoiceInteractor voiceInteractor,
             IBinder resultTo, String resultWho, int requestCode,
@@ -279,8 +325,11 @@ ActivityStackSupervisor只实现了一个DisplayListener接口
             int realCallingPid, int realCallingUid, int startFlags, Bundle options,
             boolean ignoreTargetSecurity, boolean componentSpecified, ActivityRecord[] outActivity,
             ActivityContainer container, TaskRecord inTask) {
+
         int err = ActivityManager.START_SUCCESS;
 
+        //通过caller来得到ProcessReocrd对象，判断调用者进程是否存在，
+        如果存在的话，那么将callingPid与callingUid重新赋值为ProcessRecord中的值
         ProcessRecord callerApp = null;
         if (caller != null) {
             callerApp = mService.getRecordForAppLocked(caller);
@@ -295,8 +344,10 @@ ActivityStackSupervisor只实现了一个DisplayListener接口
             }
         }
 
+         //获取针对多用户进行userId检查，默认单用户忽略检查
         final int userId = aInfo != null ? UserHandle.getUserId(aInfo.applicationInfo.uid) : 0;
 
+         //检查通过
         if (err == ActivityManager.START_SUCCESS) {
             Slog.i(TAG, &quot;START u&quot; + userId + &quot; {&quot; + intent.toShortString(true, true, true, false)
                     + &quot;} from uid &quot; + callingUid
@@ -305,6 +356,13 @@ ActivityStackSupervisor只实现了一个DisplayListener接口
                             (container.mActivityDisplay == null ? Display.DEFAULT_DISPLAY :
                                     container.mActivityDisplay.mDisplayId)));
         }
+
+
+        声明了两个ActivityRecord引用，一个为sourceRecord，一个为resultRecord。
+        sourceRecord代表着Launcher的ActivityRecord，
+        通过传入的token来得到的，此处就是Laucher Activity的Record，
+        而resultRecord只有在requestCode&gt;=0的时候才会被赋值为sourceRecord，否则就是null，
+        可以看出，resultRecord是用来进行回调的，在D Activity中设置了setResult后，会通过resultRecord来传递result值。
 
         ActivityRecord sourceRecord = null;
         ActivityRecord resultRecord = null;
@@ -319,25 +377,51 @@ ActivityStackSupervisor只实现了一个DisplayListener接口
             }
         }
 
+        //获取flags,进行检查
+        //得到Intent的launchFlags，
+        此时会判断launchFlags中是否有Intent.FLAG_ACTIVITY_FORWARD_RESULT，也就是重定向结果，
+        因为Android允许将结果重定向，也就是A通过startActivityForResult启动B，
+        而B可以通过startActivity，然后加入该标志位启动C，
+        C调用setResult后，A就能的到C中的结果了。
+
         final int launchFlags = intent.getFlags();
 
+        当launchFlags中有Intent.FLAG_ACTIVITY_FORWARD_RESULT的时候，判断requestCode是否大于等于0，
+        如果大于等于0的话，那么就直接返回错误码了，因为B启动C的时候不允许通过startActivityForResult启动，
+
         if ((launchFlags &amp; Intent.FLAG_ACTIVITY_FORWARD_RESULT) != 0 &amp;&amp; sourceRecord != null) {
+
             // Transfer the result target from the source activity to the new
             // one being started, including any failures.
-            if (requestCode &gt;= 0) {
+
+            if (requestCode &gt;= 0) {//如果大于等于0的话，那么就直接返回错误码
                 ActivityOptions.abort(options);
                 return ActivityManager.START_FORWARD_AND_REQUEST_CONFLICT;
             }
-            resultRecord = sourceRecord.resultTo;
-            if (resultRecord != null &amp;&amp; !resultRecord.isInStackLocked()) {
-                resultRecord = null;
-            }
+
+
+            //如果是通过startActivity的话，
+            首先会将resultRecord重新赋值为sourceRecord.resultTo，
+            此时sourceRecord.resultTo就是代表的A，
+            因为A是通过startActivityForResult启动B，
+            然后B通过startActivity启动C，
+            所以resultRecord代表的就是A的ActivityRecord，
+            然后将resultWho也重新赋值为A的ActivityRecord的resultWho，
+            以及requestCode也重新被赋值，并且将B的resultTo设置成null，
+            因为它不需要再接收结果了，所以设成null，
+            然后通过resultRecord.removeResultLocked，将B从A中的回调删除。
+
+             resultRecord = sourceRecord.resultTo;
+             if (resultRecord != null &amp;&amp; !resultRecord.isInStackLocked()) {
+                   resultRecord = null;
+             }
             resultWho = sourceRecord.resultWho;
             requestCode = sourceRecord.requestCode;
             sourceRecord.resultTo = null;
             if (resultRecord != null) {
                 resultRecord.removeResultsLocked(sourceRecord, resultWho, requestCode);
             }
+
             if (sourceRecord.launchedFromUid == callingUid) {
                 // The new activity is being launched from the same uid as the previous
                 // activity in the flow, and asking to forward its result back to the
@@ -353,6 +437,9 @@ ActivityStackSupervisor只实现了一个DisplayListener接口
             }
         }
 
+
+       接着会判断Intent的Component，以及B的ActivityInfo是否为null，
+       如果有一个为null的话，那么直接返回错误，
         if (err == ActivityManager.START_SUCCESS &amp;&amp; intent.getComponent() == null) {
             // We couldn&apos;t find a class that can handle the given Intent.
             // That&apos;s the end of that!
@@ -425,6 +512,8 @@ ActivityStackSupervisor只实现了一个DisplayListener接口
             return err;
         }
 
+        接着判断调用者是否有启动该Activity的权限
+            ，因为Activity中也可以在XML中配置permission，所以需要检查应用程序是否有启动该Activity的权限。
         boolean abort = false;
 
         final int startAnyPerm = mService.checkPermission(
@@ -508,6 +597,9 @@ ActivityStackSupervisor只实现了一个DisplayListener接口
             return ActivityManager.START_SUCCESS;
         }
 
+        接着创建一个ActivityRecord r，这个ActivityRecord对象就代表着要启动的B Activity，
+
+
         ActivityRecord r = new ActivityRecord(mService, callerApp, callingUid, callingPackage,
                 intent, resolvedType, aInfo, mService.mConfiguration, resultRecord, resultWho,
                 requestCode, componentSpecified, voiceSession != null, this, container, options);
@@ -520,6 +612,10 @@ ActivityStackSupervisor只实现了一个DisplayListener接口
             // tracking under any it has.
             r.appTimeTracker = sourceRecord.appTimeTracker;
         }
+
+        接着如下代码会判断当前处于Resume状态的Activity是否为null，
+             并且当前Resume状态的Activity的uid和调用者的UID是否相同
+             ，如果有一个不相同的话，那么直接返回错误码。
 
         final ActivityStack stack = mFocusedStack;
         if (voiceSession == null &amp;&amp; (stack.mResumedActivity == null
@@ -545,8 +641,15 @@ ActivityStackSupervisor只实现了一个DisplayListener接口
             mService.mDidAppSwitch = true;
         }
 
+       接着就会检查mPendingActivityLaunches是否为空，
+       这个列表中保存的是正在等待要启动的ActivityRecord，
+       那么就会遍历这个列表，
+       然后调用startActivityUnckedLocked来启动mPendingActivityLaunches表中的所有Activity，
+       启动完之后，再清除掉mPendingActivityLaunches中的记录。
+
         doPendingActivityLaunchesLocked(false);
 
+        启动当前的activity
         err = startActivityUncheckedLocked(r, sourceRecord, voiceSession, voiceInteractor,
                 startFlags, true, options, inTask);
 
@@ -558,14 +661,35 @@ ActivityStackSupervisor只实现了一个DisplayListener接口
             notifyActivityDrawnForKeyguard();
         }
         return err;
-    }                
+    } 
+</code></pre><p>查看方法doPendingActivityLaunchesLocked   </p>
+<pre><code>final void doPendingActivityLaunchesLocked(boolean doResume) {
+       while (!mPendingActivityLaunches.isEmpty()) {
+           PendingActivityLaunch pal = mPendingActivityLaunches.remove(0);
+           startActivityUncheckedLocked(pal.r, pal.sourceRecord, null, null, pal.startFlags,
+                   doResume &amp;&amp; mPendingActivityLaunches.isEmpty(), null, null);
+       }
+   }
 </code></pre><p>重点看这里 </p>
 <pre><code>err = startActivityUncheckedLocked(r, sourceRecord, voiceSession, voiceInteractor,
                 startFlags, true, options, inTask); 
-</code></pre><p>查看startActivityUncheckedLocked方法                      </p>
-<pre><code>final int startActivityUncheckedLocked(final ActivityRecord r, ActivityRecord sourceRecord,
+</code></pre><p>转到startActivityUncheckedLocked方法                      </p>
+<pre><code>  通过一系列分析，找到了该执行的目标ActivityStack，
+  然后调用该ActivityStack的startActivityLocked方法针对该任务做具体的操作。   
+
+  获取Activity的启动模式、判断要启动的Activity是否在栈顶、得到Activity加载的栈。
+
+                  传入的参数为：
+                  ActivityRecord r：要启动的Activity的ActivityRecord
+                  ActivityRecord sourceRecord:调用者Activity的ActivityRecord
+                  int startFlags:0
+                  boolean doResume:true
+                  Bundle options：调用者传入，一般为null  
+                  inTask: null
+final int startActivityUncheckedLocked(final ActivityRecord r, ActivityRecord sourceRecord,
         IVoiceInteractionSession voiceSession, IVoiceInteractor voiceInteractor, int startFlags,
         boolean doResume, Bundle options, TaskRecord inTask) {
+
     final Intent intent = r.intent;
     final int callingUid = r.launchedFromUid;
 
@@ -573,16 +697,25 @@ ActivityStackSupervisor只实现了一个DisplayListener接口
     // without a lock before calling back in to here...  so the task at this point may
     // not actually be in recents.  Check for that, and if it isn&apos;t in recents just
     // consider it invalid.
+    // 当前有没有Task可以用来执行这个Activity。
     if (inTask != null &amp;&amp; !inTask.inRecents) {
         Slog.w(TAG, &quot;Starting activity in task not in recents: &quot; + inTask);
         inTask = null;
     }
 
+    //启动模式
     final boolean launchSingleTop = r.launchMode == ActivityInfo.LAUNCH_SINGLE_TOP;
     final boolean launchSingleInstance = r.launchMode == ActivityInfo.LAUNCH_SINGLE_INSTANCE;
     final boolean launchSingleTask = r.launchMode == ActivityInfo.LAUNCH_SINGLE_TASK;
 
+
     int launchFlags = intent.getFlags();
+
+     由于r.launchMode的值不为ActivityInfo.LAUNCH_SINGLE_INSTANCE，
+            因此，它通过findTaskLocked函数来查找存不存这样的Task，
+            这里返回的结果是null，即taskTop为null，
+            因此，需要创建一个新的Task来启动这个Activity
+
     if ((launchFlags &amp; Intent.FLAG_ACTIVITY_NEW_DOCUMENT) != 0 &amp;&amp;
             (launchSingleInstance || launchSingleTask)) {
         // We have a conflict between the Intent and the Activity manifest, manifest wins.
@@ -1192,9 +1325,11 @@ ActivityStackSupervisor只实现了一个DisplayListener接口
     if (newTask) {
         EventLog.writeEvent(EventLogTags.AM_CREATE_TASK, r.userId, r.task.taskId);
     }
+
     ActivityStack.logStartActivity(EventLogTags.AM_CREATE_ACTIVITY, r, r.task);
     targetStack.mLastPausedActivity = null;
     targetStack.startActivityLocked(r, newTask, doResume, keepCurTransition, options);
+
     if (!launchTaskBehind) {
         // Don&apos;t set focus on an activity that&apos;s going to the back.
         mService.setFocusedActivityLocked(r, &quot;startedActivity&quot;);
@@ -1204,14 +1339,17 @@ ActivityStackSupervisor只实现了一个DisplayListener接口
 </code></pre><p>注意这里</p>
 <pre><code>targetStack.startActivityLocked(r, newTask, doResume, keepCurTransition, options);
 </code></pre><p>###转到ActivityStack-startActivityLocked</p>
+<p>###参考资料</p>
+<p>####<a href="https://www.jianshu.com/p/eb39325d799e" target="_blank" rel="noopener">https://www.jianshu.com/p/eb39325d799e</a></p>
+<p>####<a href="http://blog.csdn.net/lanfant/article/details/39139853" target="_blank" rel="noopener">http://blog.csdn.net/lanfant/article/details/39139853</a></p>
 
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2018/01/18/ActivityStackSupervisor-startActivityMayWait/" data-id="cjck5aek6000si9s672g13kfi" class="article-share-link">Teilen</a>
+      <a data-url="http://yoursite.com/2018/01/18/ActivityStackSupervisor-startActivityMayWait/" data-id="cjcu6hc46003lyws6xvl3a88v" class="article-share-link">Teilen</a>
       
       
-  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/ActivityStack-startActivityLocked/">ActivityStack-startActivityLocked</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/ActivityStackSupervisor-startActivityMayWait/">ActivityStackSupervisor-startActivityMayWait</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/android/">android</a></li></ul>
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/ActivityInfo/">ActivityInfo</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/ActivityStack-startActivityLocked/">ActivityStack-startActivityLocked</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/ActivityStackSupervisor-resolveActivity/">ActivityStackSupervisor-resolveActivity</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/ActivityStackSupervisor-startActivityMayWait/">ActivityStackSupervisor-startActivityMayWait</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/android/">android</a></li></ul>
 
     </footer>
   </div>
@@ -1250,7 +1388,7 @@ ActivityStackSupervisor只实现了一个DisplayListener接口
   <div class="widget-wrap">
     <h3 class="widget-title">Tags</h3>
     <div class="widget">
-      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityManagerNative-getDefault/">ActivityManagerNative-getDefault</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityManagerService-attachApplication/">ActivityManagerService-attachApplication</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityManagerService-startActivity/">ActivityManagerService-startActivity</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityManagerService-startProcessLocked/">ActivityManagerService-startProcessLocked</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityStack-resumeTopActivityLocked/">ActivityStack-resumeTopActivityLocked</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityStack-startActivityLocked/">ActivityStack-startActivityLocked</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityStackSupervisor-attachApplicationLocked/">ActivityStackSupervisor-attachApplicationLocked</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityStackSupervisor-resumeTopActivitiesLocked/">ActivityStackSupervisor-resumeTopActivitiesLocked</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityStackSupervisor-startActivityMayWait/">ActivityStackSupervisor-startActivityMayWait</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityStackSupervisor-startSpecificActivityLocked/">ActivityStackSupervisor-startSpecificActivityLocked</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityStarter-startActivityMayWait/">ActivityStarter-startActivityMayWait</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityThread-main/">ActivityThread-main</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityThread-scheduleLaunchActivity/">ActivityThread-scheduleLaunchActivity</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Instrumentation-callActivityOnCreate/">Instrumentation.callActivityOnCreate</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Process-start/">Process-start</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/android/">android</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/startActivity/">startActivity</a></li></ul>
+      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityInfo/">ActivityInfo</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityManagerNative-getDefault/">ActivityManagerNative-getDefault</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityManagerService-attachApplication/">ActivityManagerService-attachApplication</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityManagerService-startActivity/">ActivityManagerService-startActivity</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityManagerService-startProcessLocked/">ActivityManagerService-startProcessLocked</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityStack-resumeTopActivityLocked/">ActivityStack-resumeTopActivityLocked</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityStack-startActivityLocked/">ActivityStack-startActivityLocked</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityStackSupervisor-attachApplicationLocked/">ActivityStackSupervisor-attachApplicationLocked</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityStackSupervisor-resolveActivity/">ActivityStackSupervisor-resolveActivity</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityStackSupervisor-resumeTopActivitiesLocked/">ActivityStackSupervisor-resumeTopActivitiesLocked</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityStackSupervisor-startActivityMayWait/">ActivityStackSupervisor-startActivityMayWait</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityStackSupervisor-startSpecificActivityLocked/">ActivityStackSupervisor-startSpecificActivityLocked</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityStarter-startActivityMayWait/">ActivityStarter-startActivityMayWait</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityThread-main/">ActivityThread-main</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityThread-scheduleLaunchActivity/">ActivityThread-scheduleLaunchActivity</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Instrumentation-callActivityOnCreate/">Instrumentation.callActivityOnCreate</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Launcher/">Launcher</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/MBProgressHUD/">MBProgressHUD</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/OC/">OC</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Process-start/">Process-start</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/UIAlertController/">UIAlertController</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/UILabel/">UILabel</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/android/">android</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/startActivity/">startActivity</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/权限测试/">权限测试</a></li></ul>
     </div>
   </div>
 
@@ -1260,7 +1398,7 @@ ActivityStackSupervisor只实现了一个DisplayListener接口
   <div class="widget-wrap">
     <h3 class="widget-title">Tag Cloud</h3>
     <div class="widget tagcloud">
-      <a href="/tags/ActivityManagerNative-getDefault/" style="font-size: 15px;">ActivityManagerNative-getDefault</a> <a href="/tags/ActivityManagerService-attachApplication/" style="font-size: 15px;">ActivityManagerService-attachApplication</a> <a href="/tags/ActivityManagerService-startActivity/" style="font-size: 15px;">ActivityManagerService-startActivity</a> <a href="/tags/ActivityManagerService-startProcessLocked/" style="font-size: 15px;">ActivityManagerService-startProcessLocked</a> <a href="/tags/ActivityStack-resumeTopActivityLocked/" style="font-size: 15px;">ActivityStack-resumeTopActivityLocked</a> <a href="/tags/ActivityStack-startActivityLocked/" style="font-size: 15px;">ActivityStack-startActivityLocked</a> <a href="/tags/ActivityStackSupervisor-attachApplicationLocked/" style="font-size: 15px;">ActivityStackSupervisor-attachApplicationLocked</a> <a href="/tags/ActivityStackSupervisor-resumeTopActivitiesLocked/" style="font-size: 15px;">ActivityStackSupervisor-resumeTopActivitiesLocked</a> <a href="/tags/ActivityStackSupervisor-startActivityMayWait/" style="font-size: 15px;">ActivityStackSupervisor-startActivityMayWait</a> <a href="/tags/ActivityStackSupervisor-startSpecificActivityLocked/" style="font-size: 15px;">ActivityStackSupervisor-startSpecificActivityLocked</a> <a href="/tags/ActivityStarter-startActivityMayWait/" style="font-size: 15px;">ActivityStarter-startActivityMayWait</a> <a href="/tags/ActivityThread-main/" style="font-size: 15px;">ActivityThread-main</a> <a href="/tags/ActivityThread-scheduleLaunchActivity/" style="font-size: 15px;">ActivityThread-scheduleLaunchActivity</a> <a href="/tags/Instrumentation-callActivityOnCreate/" style="font-size: 15px;">Instrumentation.callActivityOnCreate</a> <a href="/tags/Process-start/" style="font-size: 15px;">Process-start</a> <a href="/tags/android/" style="font-size: 20px;">android</a> <a href="/tags/startActivity/" style="font-size: 10px;">startActivity</a>
+      <a href="/tags/ActivityInfo/" style="font-size: 12.5px;">ActivityInfo</a> <a href="/tags/ActivityManagerNative-getDefault/" style="font-size: 12.5px;">ActivityManagerNative-getDefault</a> <a href="/tags/ActivityManagerService-attachApplication/" style="font-size: 12.5px;">ActivityManagerService-attachApplication</a> <a href="/tags/ActivityManagerService-startActivity/" style="font-size: 12.5px;">ActivityManagerService-startActivity</a> <a href="/tags/ActivityManagerService-startProcessLocked/" style="font-size: 12.5px;">ActivityManagerService-startProcessLocked</a> <a href="/tags/ActivityStack-resumeTopActivityLocked/" style="font-size: 12.5px;">ActivityStack-resumeTopActivityLocked</a> <a href="/tags/ActivityStack-startActivityLocked/" style="font-size: 12.5px;">ActivityStack-startActivityLocked</a> <a href="/tags/ActivityStackSupervisor-attachApplicationLocked/" style="font-size: 12.5px;">ActivityStackSupervisor-attachApplicationLocked</a> <a href="/tags/ActivityStackSupervisor-resolveActivity/" style="font-size: 12.5px;">ActivityStackSupervisor-resolveActivity</a> <a href="/tags/ActivityStackSupervisor-resumeTopActivitiesLocked/" style="font-size: 12.5px;">ActivityStackSupervisor-resumeTopActivitiesLocked</a> <a href="/tags/ActivityStackSupervisor-startActivityMayWait/" style="font-size: 17.5px;">ActivityStackSupervisor-startActivityMayWait</a> <a href="/tags/ActivityStackSupervisor-startSpecificActivityLocked/" style="font-size: 12.5px;">ActivityStackSupervisor-startSpecificActivityLocked</a> <a href="/tags/ActivityStarter-startActivityMayWait/" style="font-size: 12.5px;">ActivityStarter-startActivityMayWait</a> <a href="/tags/ActivityThread-main/" style="font-size: 12.5px;">ActivityThread-main</a> <a href="/tags/ActivityThread-scheduleLaunchActivity/" style="font-size: 12.5px;">ActivityThread-scheduleLaunchActivity</a> <a href="/tags/Instrumentation-callActivityOnCreate/" style="font-size: 12.5px;">Instrumentation.callActivityOnCreate</a> <a href="/tags/Launcher/" style="font-size: 10px;">Launcher</a> <a href="/tags/MBProgressHUD/" style="font-size: 10px;">MBProgressHUD</a> <a href="/tags/OC/" style="font-size: 15px;">OC</a> <a href="/tags/Process-start/" style="font-size: 12.5px;">Process-start</a> <a href="/tags/UIAlertController/" style="font-size: 10px;">UIAlertController</a> <a href="/tags/UILabel/" style="font-size: 10px;">UILabel</a> <a href="/tags/android/" style="font-size: 20px;">android</a> <a href="/tags/startActivity/" style="font-size: 10px;">startActivity</a> <a href="/tags/权限测试/" style="font-size: 10px;">权限测试</a>
     </div>
   </div>
 
@@ -1282,23 +1420,23 @@ ActivityStackSupervisor只实现了一个DisplayListener接口
       <ul>
         
           <li>
-            <a href="/2018/01/18/Instrumentation-callActivityOnCreate/">Instrumentation.callActivityOnCreate</a>
+            <a href="/2018/01/25/OC-MBProgressHUD使用/">OC-MBProgressHUD使用</a>
           </li>
         
           <li>
-            <a href="/2018/01/18/ActivityThread-scheduleLaunchActivity/">ActivityThread-scheduleLaunchActivity </a>
+            <a href="/2018/01/25/OC-对话框/">OC-对话框</a>
           </li>
         
           <li>
-            <a href="/2018/01/18/ActivityStackSupervisor-attachApplicationLocked/">ActivityStackSupervisor-attachApplicationLocked</a>
+            <a href="/2018/01/25/OC-UILabel点击事件/">OC-UILabel点击事件</a>
           </li>
         
           <li>
-            <a href="/2018/01/18/ActivityManagerService-attachApplication/">ActivityManagerService-attachApplication</a>
+            <a href="/2018/01/22/launcher-启动Main/">launcher 启动Main</a>
           </li>
         
           <li>
-            <a href="/2018/01/18/ActivityThread-main/">ActivityThread-main</a>
+            <a href="/2018/01/19/ActivityStackSupervisor-resolveActivity/">ActivityStackSupervisor-resolveActivity</a>
           </li>
         
       </ul>
