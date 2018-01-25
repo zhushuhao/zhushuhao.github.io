@@ -48,9 +48,9 @@
       </nav>
       <nav id="sub-nav">
         
-          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS"></a>
         
-        <a id="nav-search-btn" class="nav-icon" title="Suche"></a>
+        <a id="nav-search-btn" class="nav-icon" title="Buscar"></a>
       </nav>
       <div id="search-form-wrap">
         <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://yoursite.com"></form>
@@ -60,6 +60,57 @@
 </header>
       <div class="outer">
         <section id="main">
+  
+    <article id="post-OC-AFN使用" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2018/01/25/OC-AFN使用/" class="article-date">
+  <time datetime="2018-01-25T09:48:34.000Z" itemprop="datePublished">2018-01-25</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2018/01/25/OC-AFN使用/">OC-AFN使用</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <pre><code>//GET方式获取百度主页内容
+NSString *url = [NSString stringWithFormat:@&quot;http://www.baidu.com&quot;];
+AFHTTPSessionManager *manager = [AFHTTPSessionManager manager];
+manager.responseSerializer = [AFHTTPResponseSerializer serializer];
+
+[manager.responseSerializer setAcceptableContentTypes:[NSSet setWithObjects:@&quot;text/html&quot;, nil]];
+[manager GET:url parameters:nil progress:nil success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
+
+    NSString *result = [[NSString alloc]initWithData:responseObject encoding:NSUTF8StringEncoding];
+    NSLog(@&quot;%@&quot;,result);
+} failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
+    NSLog(@&quot;%@&quot;,[error localizedDescription]);
+}];
+</code></pre>
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2018/01/25/OC-AFN使用/" data-id="cjcubibt6000ngjs65ze1qy61" class="article-share-link">Compartir</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/AFNetworking/">AFNetworking</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/OC/">OC</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
   
     <article id="post-OC-MBProgressHUD使用" class="article article-type-post" itemscope itemprop="blogPost">
   <div class="article-meta">
@@ -108,7 +159,7 @@ hud.customView=[[UIImageView alloc] initWithImage:[UIImage imageNamed:@&quot;suc
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2018/01/25/OC-MBProgressHUD使用/" data-id="cjcu6hc2l000oyws62c53d8as" class="article-share-link">Teilen</a>
+      <a data-url="http://yoursite.com/2018/01/25/OC-MBProgressHUD使用/" data-id="cjcubibt9000ogjs6wtud3zg7" class="article-share-link">Compartir</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/MBProgressHUD/">MBProgressHUD</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/OC/">OC</a></li></ul>
@@ -199,7 +250,7 @@ UIAlertController* alert = [UIAlertController alertControllerWithTitle:@&quot;Ti
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2018/01/25/OC-对话框/" data-id="cjcu6hc300014yws602oo147j" class="article-share-link">Teilen</a>
+      <a data-url="http://yoursite.com/2018/01/25/OC-对话框/" data-id="cjcubibtj000ygjs6f107f5bq" class="article-share-link">Compartir</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/OC/">OC</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/UIAlertController/">UIAlertController</a></li></ul>
@@ -248,7 +299,7 @@ UITapGestureRecognizer *getVoiceCode =
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2018/01/25/OC-UILabel点击事件/" data-id="cjcu6hc2p000tyws66adgk6mr" class="article-share-link">Teilen</a>
+      <a data-url="http://yoursite.com/2018/01/25/OC-UILabel点击事件/" data-id="cjcubibtq0015gjs6md22xe3d" class="article-share-link">Compartir</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/OC/">OC</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/UILabel/">UILabel</a></li></ul>
@@ -327,7 +378,7 @@ Process-班主任
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2018/01/22/launcher-启动Main/" data-id="cjcu6hc2w0011yws6x25g1ddm" class="article-share-link">Teilen</a>
+      <a data-url="http://yoursite.com/2018/01/22/launcher-启动Main/" data-id="cjcubibtg000wgjs6lor455b3" class="article-share-link">Compartir</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Launcher/">Launcher</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/android/">android</a></li></ul>
@@ -411,7 +462,7 @@ Process-班主任
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2018/01/19/ActivityStackSupervisor-resolveActivity/" data-id="cjcu6hc1p0008yws6bmmbaob2" class="article-share-link">Teilen</a>
+      <a data-url="http://yoursite.com/2018/01/19/ActivityStackSupervisor-resolveActivity/" data-id="cjcubibsh000bgjs6nnvxwgyg" class="article-share-link">Compartir</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/ActivityStackSupervisor-resolveActivity/">ActivityStackSupervisor-resolveActivity</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/ActivityStackSupervisor-startActivityMayWait/">ActivityStackSupervisor-startActivityMayWait</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/android/">android</a></li></ul>
@@ -464,7 +515,7 @@ Process-班主任
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2018/01/19/ActivityInfo/" data-id="cjcu6hc1j0003yws6hilpcbqq" class="article-share-link">Teilen</a>
+      <a data-url="http://yoursite.com/2018/01/19/ActivityInfo/" data-id="cjcubibrz0001gjs6gg0lm9ld" class="article-share-link">Compartir</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/ActivityInfo/">ActivityInfo</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/ActivityStackSupervisor-startActivityMayWait/">ActivityStackSupervisor-startActivityMayWait</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/android/">android</a></li></ul>
@@ -606,7 +657,7 @@ AppOpsCode-&gt;1
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2018/01/18/小米权限测试/" data-id="cjcu6hc2x0012yws6w11f3x7v" class="article-share-link">Teilen</a>
+      <a data-url="http://yoursite.com/2018/01/18/小米权限测试/" data-id="cjcubibtp0014gjs6jbkt304v" class="article-share-link">Compartir</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/android/">android</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/权限测试/">权限测试</a></li></ul>
@@ -717,7 +768,7 @@ AppOpsCode-&gt;1
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2018/01/18/Instrumentation-callActivityOnCreate/" data-id="cjcu6hc2f000iyws6h5uhb7hg" class="article-share-link">Teilen</a>
+      <a data-url="http://yoursite.com/2018/01/18/Instrumentation-callActivityOnCreate/" data-id="cjcubibsv000igjs60ep6uswn" class="article-share-link">Compartir</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Instrumentation-callActivityOnCreate/">Instrumentation.callActivityOnCreate</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/android/">android</a></li></ul>
@@ -1031,273 +1082,10 @@ private class H extends Handler {
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2018/01/18/ActivityThread-scheduleLaunchActivity/" data-id="cjcu6hc2n000qyws6dwp3sxjh" class="article-share-link">Teilen</a>
+      <a data-url="http://yoursite.com/2018/01/18/ActivityThread-scheduleLaunchActivity/" data-id="cjcubibt0000kgjs6xwc27o1t" class="article-share-link">Compartir</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/ActivityThread-scheduleLaunchActivity/">ActivityThread-scheduleLaunchActivity</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Instrumentation-callActivityOnCreate/">Instrumentation.callActivityOnCreate</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/android/">android</a></li></ul>
-
-    </footer>
-  </div>
-  
-</article>
-
-
-  
-    <article id="post-ActivityStackSupervisor-attachApplicationLocked" class="article article-type-post" itemscope itemprop="blogPost">
-  <div class="article-meta">
-    <a href="/2018/01/18/ActivityStackSupervisor-attachApplicationLocked/" class="article-date">
-  <time datetime="2018-01-18T04:28:01.000Z" itemprop="datePublished">2018-01-18</time>
-</a>
-    
-  </div>
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2018/01/18/ActivityStackSupervisor-attachApplicationLocked/">ActivityStackSupervisor-attachApplicationLocked</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>查看attachApplicationLocked方法</p>
-<pre><code>boolean attachApplicationLocked(ProcessRecord app) throws RemoteException {
-        final String processName = app.processName;
-        boolean didSomething = false;
-        for (int displayNdx = mActivityDisplays.size() - 1; displayNdx &gt;= 0; --displayNdx) {
-            ArrayList&lt;ActivityStack&gt; stacks = mActivityDisplays.valueAt(displayNdx).mStacks;
-            for (int stackNdx = stacks.size() - 1; stackNdx &gt;= 0; --stackNdx) {
-                final ActivityStack stack = stacks.get(stackNdx);
-                if (!isFrontStack(stack)) {
-                    continue;
-                }
-                ActivityRecord hr = stack.topRunningActivityLocked(null);
-                if (hr != null) {
-                    if (hr.app == null &amp;&amp; app.uid == hr.info.applicationInfo.uid
-                            &amp;&amp; processName.equals(hr.processName)) {
-                        try {
-                            if (realStartActivityLocked(hr, app, true, true)) {
-                                didSomething = true;
-                            }
-                        } catch (RemoteException e) {
-                            Slog.w(TAG, &quot;Exception in new application when starting activity &quot;
-                                  + hr.intent.getComponent().flattenToShortString(), e);
-                            throw e;
-                        }
-                    }
-                }
-            }
-        }
-        if (!didSomething) {
-            ensureActivitiesVisibleLocked(null, 0);
-        }
-        return didSomething;
-   }
-</code></pre><p>转到realStartActivityLocked方法</p>
-<pre><code>inal boolean realStartActivityLocked(ActivityRecord r,
-            ProcessRecord app, boolean andResume, boolean checkConfig)
-            throws RemoteException {
-
-        if (andResume) {
-            r.startFreezingScreenLocked(app, 0);
-            mWindowManager.setAppVisibility(r.appToken, true);
-
-            // schedule launch ticks to collect information about slow apps.
-            r.startLaunchTickingLocked();
-        }
-
-        // Have the window manager re-evaluate the orientation of
-        // the screen based on the new activity order.  Note that
-        // as a result of this, it can call back into the activity
-        // manager with a new orientation.  We don&apos;t care about that,
-        // because the activity is not currently running so we are
-        // just restarting it anyway.
-        if (checkConfig) {
-            Configuration config = mWindowManager.updateOrientationFromAppTokens(
-                    mService.mConfiguration,
-                    r.mayFreezeScreenLocked(app) ? r.appToken : null);
-            mService.updateConfigurationLocked(config, r, false, false);
-        }
-
-        r.app = app;
-        app.waitingToKill = null;
-        r.launchCount++;
-        r.lastLaunchTime = SystemClock.uptimeMillis();
-
-        if (DEBUG_ALL) Slog.v(TAG, &quot;Launching: &quot; + r);
-
-        int idx = app.activities.indexOf(r);
-        if (idx &lt; 0) {
-            app.activities.add(r);
-        }
-        mService.updateLruProcessLocked(app, true, null);
-        mService.updateOomAdjLocked();
-
-        final TaskRecord task = r.task;
-        if (task.mLockTaskAuth == LOCK_TASK_AUTH_LAUNCHABLE ||
-                task.mLockTaskAuth == LOCK_TASK_AUTH_LAUNCHABLE_PRIV) {
-            setLockTaskModeLocked(task, LOCK_TASK_MODE_LOCKED, &quot;mLockTaskAuth==LAUNCHABLE&quot;, false);
-        }
-
-        final ActivityStack stack = task.stack;
-        try {
-            if (app.thread == null) {
-                throw new RemoteException();
-            }
-            List&lt;ResultInfo&gt; results = null;
-            List&lt;ReferrerIntent&gt; newIntents = null;
-            if (andResume) {
-                results = r.results;
-                newIntents = r.newIntents;
-            }
-            if (DEBUG_SWITCH) Slog.v(TAG_SWITCH,
-                    &quot;Launching: &quot; + r + &quot; icicle=&quot; + r.icicle + &quot; with results=&quot; + results
-                    + &quot; newIntents=&quot; + newIntents + &quot; andResume=&quot; + andResume);
-            if (andResume) {
-                EventLog.writeEvent(EventLogTags.AM_RESTART_ACTIVITY,
-                        r.userId, System.identityHashCode(r),
-                        task.taskId, r.shortComponentName);
-            }
-            if (r.isHomeActivity() &amp;&amp; r.isNotResolverActivity()) {
-                // Home process is the root process of the task.
-                mService.mHomeProcess = task.mActivities.get(0).app;
-            }
-            mService.ensurePackageDexOpt(r.intent.getComponent().getPackageName());
-            r.sleeping = false;
-            r.forceNewConfig = false;
-            mService.showAskCompatModeDialogLocked(r);
-            r.compat = mService.compatibilityInfoForPackageLocked(r.info.applicationInfo);
-            ProfilerInfo profilerInfo = null;
-            if (mService.mProfileApp != null &amp;&amp; mService.mProfileApp.equals(app.processName)) {
-                if (mService.mProfileProc == null || mService.mProfileProc == app) {
-                    mService.mProfileProc = app;
-                    final String profileFile = mService.mProfileFile;
-                    if (profileFile != null) {
-                        ParcelFileDescriptor profileFd = mService.mProfileFd;
-                        if (profileFd != null) {
-                            try {
-                                profileFd = profileFd.dup();
-                            } catch (IOException e) {
-                                if (profileFd != null) {
-                                    try {
-                                        profileFd.close();
-                                    } catch (IOException o) {
-                                    }
-                                    profileFd = null;
-                                }
-                            }
-                        }
-
-                        profilerInfo = new ProfilerInfo(profileFile, profileFd,
-                                mService.mSamplingInterval, mService.mAutoStopProfiler);
-                    }
-                }
-            }
-
-            if (andResume) {
-                app.hasShownUi = true;
-                app.pendingUiClean = true;
-            }
-            app.forceProcessStateUpTo(mService.mTopProcessState);
-            app.thread.scheduleLaunchActivity(new Intent(r.intent), r.appToken,
-                    System.identityHashCode(r), r.info, new Configuration(mService.mConfiguration),
-                    new Configuration(stack.mOverrideConfig), r.compat, r.launchedFromPackage,
-                    task.voiceInteractor, app.repProcState, r.icicle, r.persistentState, results,
-                    newIntents, !andResume, mService.isNextTransitionForward(), profilerInfo);
-
-            if ((app.info.privateFlags&amp;ApplicationInfo.PRIVATE_FLAG_CANT_SAVE_STATE) != 0) {
-                // This may be a heavy-weight process!  Note that the package
-                // manager will ensure that only activity can run in the main
-                // process of the .apk, which is the only thing that will be
-                // considered heavy-weight.
-                if (app.processName.equals(app.info.packageName)) {
-                    if (mService.mHeavyWeightProcess != null
-                            &amp;&amp; mService.mHeavyWeightProcess != app) {
-                        Slog.w(TAG, &quot;Starting new heavy weight process &quot; + app
-                                + &quot; when already running &quot;
-                                + mService.mHeavyWeightProcess);
-                    }
-                    mService.mHeavyWeightProcess = app;
-                    Message msg = mService.mHandler.obtainMessage(
-                            ActivityManagerService.POST_HEAVY_NOTIFICATION_MSG);
-                    msg.obj = r;
-                    mService.mHandler.sendMessage(msg);
-                }
-            }
-
-        } catch (RemoteException e) {
-            if (r.launchFailed) {
-                // This is the second time we failed -- finish activity
-                // and give up.
-                Slog.e(TAG, &quot;Second failure launching &quot;
-                      + r.intent.getComponent().flattenToShortString()
-                      + &quot;, giving up&quot;, e);
-                mService.appDiedLocked(app);
-                stack.requestFinishActivityLocked(r.appToken, Activity.RESULT_CANCELED, null,
-                        &quot;2nd-crash&quot;, false);
-                return false;
-            }
-
-            // This is the first time we failed -- restart process and
-            // retry.
-            app.activities.remove(r);
-            throw e;
-        }
-
-        r.launchFailed = false;
-        if (stack.updateLRUListLocked(r)) {
-            Slog.w(TAG, &quot;Activity &quot; + r
-                  + &quot; being launched, but already in LRU list&quot;);
-        }
-
-        if (andResume) {
-            // As part of the process of launching, ActivityThread also performs
-            // a resume.
-            stack.minimalResumeActivityLocked(r);
-        } else {
-            // This activity is not starting in the resumed state... which
-            // should look like we asked it to pause+stop (but remain visible),
-            // and it has done so and reported back the current icicle and
-            // other state.
-            if (DEBUG_STATES) Slog.v(TAG_STATES,
-                    &quot;Moving to STOPPED: &quot; + r + &quot; (starting in stopped state)&quot;);
-            r.state = STOPPED;
-            r.stopped = true;
-        }
-
-        // Launch the new version setup screen if needed.  We do this -after-
-        // launching the initial activity (that is, home), so that it can have
-        // a chance to initialize itself while in the background, making the
-        // switch back to it faster and look better.
-        if (isFrontStack(stack)) {
-            mService.startSetupActivityLocked();
-        }
-
-        // Update any services we are bound to that might care about whether
-        // their client may have activities.
-        mService.mServices.updateServiceConnectionActivitiesLocked(r.app);
-
-        return true;
-    }
-</code></pre><p>重点</p>
-<pre><code>app.thread.scheduleLaunchActivity(new Intent(r.intent), r.appToken,
-                           System.identityHashCode(r), r.info, new Configuration(mService.mConfiguration),
-                           new Configuration(stack.mOverrideConfig), r.compat, r.launchedFromPackage,
-                           task.voiceInteractor, app.repProcState, r.icicle, r.persistentState, results,
-                           newIntents, !andResume, mService.isNextTransitionForward(), profilerInfo);
-</code></pre><h3 id="转到-ActivityThread-scheduleLaunchActivity"><a href="#转到-ActivityThread-scheduleLaunchActivity" class="headerlink" title="转到 ActivityThread-scheduleLaunchActivity"></a>转到 ActivityThread-scheduleLaunchActivity</h3>
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="http://yoursite.com/2018/01/18/ActivityStackSupervisor-attachApplicationLocked/" data-id="cjcu6hc1o0007yws6fdf8ui1r" class="article-share-link">Teilen</a>
-      
-      
-  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/ActivityStackSupervisor-attachApplicationLocked/">ActivityStackSupervisor-attachApplicationLocked</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/ActivityThread-scheduleLaunchActivity/">ActivityThread-scheduleLaunchActivity</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/android/">android</a></li></ul>
 
     </footer>
   </div>
@@ -1310,7 +1098,7 @@ private class H extends Handler {
 
   <nav id="page-nav">
     
-    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><a class="page-number" href="/page/3/">3</a><a class="extend next" rel="next" href="/page/2/">weiter &raquo;</a>
+    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><a class="page-number" href="/page/3/">3</a><a class="extend next" rel="next" href="/page/2/">Siguiente &raquo;</a>
   </nav>
 
 </section>
@@ -1324,7 +1112,7 @@ private class H extends Handler {
   <div class="widget-wrap">
     <h3 class="widget-title">Tags</h3>
     <div class="widget">
-      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityInfo/">ActivityInfo</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityManagerNative-getDefault/">ActivityManagerNative-getDefault</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityManagerService-attachApplication/">ActivityManagerService-attachApplication</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityManagerService-startActivity/">ActivityManagerService-startActivity</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityManagerService-startProcessLocked/">ActivityManagerService-startProcessLocked</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityStack-resumeTopActivityLocked/">ActivityStack-resumeTopActivityLocked</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityStack-startActivityLocked/">ActivityStack-startActivityLocked</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityStackSupervisor-attachApplicationLocked/">ActivityStackSupervisor-attachApplicationLocked</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityStackSupervisor-resolveActivity/">ActivityStackSupervisor-resolveActivity</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityStackSupervisor-resumeTopActivitiesLocked/">ActivityStackSupervisor-resumeTopActivitiesLocked</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityStackSupervisor-startActivityMayWait/">ActivityStackSupervisor-startActivityMayWait</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityStackSupervisor-startSpecificActivityLocked/">ActivityStackSupervisor-startSpecificActivityLocked</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityStarter-startActivityMayWait/">ActivityStarter-startActivityMayWait</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityThread-main/">ActivityThread-main</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityThread-scheduleLaunchActivity/">ActivityThread-scheduleLaunchActivity</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Instrumentation-callActivityOnCreate/">Instrumentation.callActivityOnCreate</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Launcher/">Launcher</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/MBProgressHUD/">MBProgressHUD</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/OC/">OC</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Process-start/">Process-start</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/UIAlertController/">UIAlertController</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/UILabel/">UILabel</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/android/">android</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/startActivity/">startActivity</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/权限测试/">权限测试</a></li></ul>
+      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/AFNetworking/">AFNetworking</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityInfo/">ActivityInfo</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityManagerNative-getDefault/">ActivityManagerNative-getDefault</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityManagerService-attachApplication/">ActivityManagerService-attachApplication</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityManagerService-startActivity/">ActivityManagerService-startActivity</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityManagerService-startProcessLocked/">ActivityManagerService-startProcessLocked</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityStack-resumeTopActivityLocked/">ActivityStack-resumeTopActivityLocked</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityStack-startActivityLocked/">ActivityStack-startActivityLocked</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityStackSupervisor-attachApplicationLocked/">ActivityStackSupervisor-attachApplicationLocked</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityStackSupervisor-resolveActivity/">ActivityStackSupervisor-resolveActivity</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityStackSupervisor-resumeTopActivitiesLocked/">ActivityStackSupervisor-resumeTopActivitiesLocked</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityStackSupervisor-startActivityMayWait/">ActivityStackSupervisor-startActivityMayWait</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityStackSupervisor-startSpecificActivityLocked/">ActivityStackSupervisor-startSpecificActivityLocked</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityStarter-startActivityMayWait/">ActivityStarter-startActivityMayWait</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityThread-main/">ActivityThread-main</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ActivityThread-scheduleLaunchActivity/">ActivityThread-scheduleLaunchActivity</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Instrumentation-callActivityOnCreate/">Instrumentation.callActivityOnCreate</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Launcher/">Launcher</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/MBProgressHUD/">MBProgressHUD</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/OC/">OC</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Process-start/">Process-start</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/UIAlertController/">UIAlertController</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/UILabel/">UILabel</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/android/">android</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/startActivity/">startActivity</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/权限测试/">权限测试</a></li></ul>
     </div>
   </div>
 
@@ -1332,16 +1120,16 @@ private class H extends Handler {
   
     
   <div class="widget-wrap">
-    <h3 class="widget-title">Tag Cloud</h3>
+    <h3 class="widget-title">Nube de Tags</h3>
     <div class="widget tagcloud">
-      <a href="/tags/ActivityInfo/" style="font-size: 12.5px;">ActivityInfo</a> <a href="/tags/ActivityManagerNative-getDefault/" style="font-size: 12.5px;">ActivityManagerNative-getDefault</a> <a href="/tags/ActivityManagerService-attachApplication/" style="font-size: 12.5px;">ActivityManagerService-attachApplication</a> <a href="/tags/ActivityManagerService-startActivity/" style="font-size: 12.5px;">ActivityManagerService-startActivity</a> <a href="/tags/ActivityManagerService-startProcessLocked/" style="font-size: 12.5px;">ActivityManagerService-startProcessLocked</a> <a href="/tags/ActivityStack-resumeTopActivityLocked/" style="font-size: 12.5px;">ActivityStack-resumeTopActivityLocked</a> <a href="/tags/ActivityStack-startActivityLocked/" style="font-size: 12.5px;">ActivityStack-startActivityLocked</a> <a href="/tags/ActivityStackSupervisor-attachApplicationLocked/" style="font-size: 12.5px;">ActivityStackSupervisor-attachApplicationLocked</a> <a href="/tags/ActivityStackSupervisor-resolveActivity/" style="font-size: 12.5px;">ActivityStackSupervisor-resolveActivity</a> <a href="/tags/ActivityStackSupervisor-resumeTopActivitiesLocked/" style="font-size: 12.5px;">ActivityStackSupervisor-resumeTopActivitiesLocked</a> <a href="/tags/ActivityStackSupervisor-startActivityMayWait/" style="font-size: 17.5px;">ActivityStackSupervisor-startActivityMayWait</a> <a href="/tags/ActivityStackSupervisor-startSpecificActivityLocked/" style="font-size: 12.5px;">ActivityStackSupervisor-startSpecificActivityLocked</a> <a href="/tags/ActivityStarter-startActivityMayWait/" style="font-size: 12.5px;">ActivityStarter-startActivityMayWait</a> <a href="/tags/ActivityThread-main/" style="font-size: 12.5px;">ActivityThread-main</a> <a href="/tags/ActivityThread-scheduleLaunchActivity/" style="font-size: 12.5px;">ActivityThread-scheduleLaunchActivity</a> <a href="/tags/Instrumentation-callActivityOnCreate/" style="font-size: 12.5px;">Instrumentation.callActivityOnCreate</a> <a href="/tags/Launcher/" style="font-size: 10px;">Launcher</a> <a href="/tags/MBProgressHUD/" style="font-size: 10px;">MBProgressHUD</a> <a href="/tags/OC/" style="font-size: 15px;">OC</a> <a href="/tags/Process-start/" style="font-size: 12.5px;">Process-start</a> <a href="/tags/UIAlertController/" style="font-size: 10px;">UIAlertController</a> <a href="/tags/UILabel/" style="font-size: 10px;">UILabel</a> <a href="/tags/android/" style="font-size: 20px;">android</a> <a href="/tags/startActivity/" style="font-size: 10px;">startActivity</a> <a href="/tags/权限测试/" style="font-size: 10px;">权限测试</a>
+      <a href="/tags/AFNetworking/" style="font-size: 10px;">AFNetworking</a> <a href="/tags/ActivityInfo/" style="font-size: 13.33px;">ActivityInfo</a> <a href="/tags/ActivityManagerNative-getDefault/" style="font-size: 13.33px;">ActivityManagerNative-getDefault</a> <a href="/tags/ActivityManagerService-attachApplication/" style="font-size: 13.33px;">ActivityManagerService-attachApplication</a> <a href="/tags/ActivityManagerService-startActivity/" style="font-size: 13.33px;">ActivityManagerService-startActivity</a> <a href="/tags/ActivityManagerService-startProcessLocked/" style="font-size: 13.33px;">ActivityManagerService-startProcessLocked</a> <a href="/tags/ActivityStack-resumeTopActivityLocked/" style="font-size: 13.33px;">ActivityStack-resumeTopActivityLocked</a> <a href="/tags/ActivityStack-startActivityLocked/" style="font-size: 13.33px;">ActivityStack-startActivityLocked</a> <a href="/tags/ActivityStackSupervisor-attachApplicationLocked/" style="font-size: 13.33px;">ActivityStackSupervisor-attachApplicationLocked</a> <a href="/tags/ActivityStackSupervisor-resolveActivity/" style="font-size: 13.33px;">ActivityStackSupervisor-resolveActivity</a> <a href="/tags/ActivityStackSupervisor-resumeTopActivitiesLocked/" style="font-size: 13.33px;">ActivityStackSupervisor-resumeTopActivitiesLocked</a> <a href="/tags/ActivityStackSupervisor-startActivityMayWait/" style="font-size: 16.67px;">ActivityStackSupervisor-startActivityMayWait</a> <a href="/tags/ActivityStackSupervisor-startSpecificActivityLocked/" style="font-size: 13.33px;">ActivityStackSupervisor-startSpecificActivityLocked</a> <a href="/tags/ActivityStarter-startActivityMayWait/" style="font-size: 13.33px;">ActivityStarter-startActivityMayWait</a> <a href="/tags/ActivityThread-main/" style="font-size: 13.33px;">ActivityThread-main</a> <a href="/tags/ActivityThread-scheduleLaunchActivity/" style="font-size: 13.33px;">ActivityThread-scheduleLaunchActivity</a> <a href="/tags/Instrumentation-callActivityOnCreate/" style="font-size: 13.33px;">Instrumentation.callActivityOnCreate</a> <a href="/tags/Launcher/" style="font-size: 10px;">Launcher</a> <a href="/tags/MBProgressHUD/" style="font-size: 10px;">MBProgressHUD</a> <a href="/tags/OC/" style="font-size: 16.67px;">OC</a> <a href="/tags/Process-start/" style="font-size: 13.33px;">Process-start</a> <a href="/tags/UIAlertController/" style="font-size: 10px;">UIAlertController</a> <a href="/tags/UILabel/" style="font-size: 10px;">UILabel</a> <a href="/tags/android/" style="font-size: 20px;">android</a> <a href="/tags/startActivity/" style="font-size: 10px;">startActivity</a> <a href="/tags/权限测试/" style="font-size: 10px;">权限测试</a>
     </div>
   </div>
 
   
     
   <div class="widget-wrap">
-    <h3 class="widget-title">Archiv</h3>
+    <h3 class="widget-title">Archivos</h3>
     <div class="widget">
       <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/01/">January 2018</a></li></ul>
     </div>
@@ -1351,9 +1139,13 @@ private class H extends Handler {
   
     
   <div class="widget-wrap">
-    <h3 class="widget-title">letzter Beitrag</h3>
+    <h3 class="widget-title">Posts recientes</h3>
     <div class="widget">
       <ul>
+        
+          <li>
+            <a href="/2018/01/25/OC-AFN使用/">OC-AFN使用</a>
+          </li>
         
           <li>
             <a href="/2018/01/25/OC-MBProgressHUD使用/">OC-MBProgressHUD使用</a>
@@ -1371,10 +1163,6 @@ private class H extends Handler {
             <a href="/2018/01/22/launcher-启动Main/">launcher 启动Main</a>
           </li>
         
-          <li>
-            <a href="/2018/01/19/ActivityStackSupervisor-resolveActivity/">ActivityStackSupervisor-resolveActivity</a>
-          </li>
-        
       </ul>
     </div>
   </div>
@@ -1388,7 +1176,7 @@ private class H extends Handler {
   <div class="outer">
     <div id="footer-info" class="inner">
       &copy; 2018 zhushuhao<br>
-      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+      Construido por <a href="http://hexo.io/" target="_blank">Hexo</a>
     </div>
   </div>
 </footer>

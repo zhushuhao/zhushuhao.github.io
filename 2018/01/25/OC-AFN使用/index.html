@@ -5,14 +5,19 @@
   
 
   
-  <title>Tag: Instrumentation.callActivityOnCreate | 小代码 大世界</title>
+  <title>OC-AFN使用 | 小代码 大世界</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta property="og:type" content="website">
-<meta property="og:title" content="小代码 大世界">
-<meta property="og:url" content="http://yoursite.com/tags/Instrumentation-callActivityOnCreate/index.html">
+  <meta name="description" content="//GET方式获取百度主页内容 NSString *url = [NSString stringWithFormat:@&amp;quot;http://www.baidu.com&amp;quot;]; AFHTTPSessionManager *manager = [AFHTTPSessionManager manager]; manager.responseSerializer = [AFHTTPRespo">
+<meta name="keywords" content="OC,AFNetworking">
+<meta property="og:type" content="article">
+<meta property="og:title" content="OC-AFN使用">
+<meta property="og:url" content="http://yoursite.com/2018/01/25/OC-AFN使用/index.html">
 <meta property="og:site_name" content="小代码 大世界">
+<meta property="og:description" content="//GET方式获取百度主页内容 NSString *url = [NSString stringWithFormat:@&amp;quot;http://www.baidu.com&amp;quot;]; AFHTTPSessionManager *manager = [AFHTTPSessionManager manager]; manager.responseSerializer = [AFHTTPRespo">
+<meta property="og:updated_time" content="2018-01-25T09:49:26.143Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="小代码 大世界">
+<meta name="twitter:title" content="OC-AFN使用">
+<meta name="twitter:description" content="//GET方式获取百度主页内容 NSString *url = [NSString stringWithFormat:@&amp;quot;http://www.baidu.com&amp;quot;]; AFHTTPSessionManager *manager = [AFHTTPSessionManager manager]; manager.responseSerializer = [AFHTTPRespo">
   
     <link rel="alternate" href="/atom.xml" title="小代码 大世界" type="application/atom+xml">
   
@@ -59,59 +64,66 @@
   </div>
 </header>
       <div class="outer">
-        <section id="main">
-  
-  
-    
-    
-      
-      
-      <section class="archives-wrap">
-        <div class="archive-year-wrap">
-          <a href="/archives/2018" class="archive-year">2018</a>
-        </div>
-        <div class="archives">
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2018/01/18/Instrumentation-callActivityOnCreate/" class="archive-article-date">
-  <time datetime="2018-01-18T06:49:21.000Z" itemprop="datePublished">Jan 18</time>
+        <section id="main"><article id="post-OC-AFN使用" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2018/01/25/OC-AFN使用/" class="article-date">
+  <time datetime="2018-01-25T09:48:34.000Z" itemprop="datePublished">2018-01-25</time>
 </a>
-      
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
   
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2018/01/18/Instrumentation-callActivityOnCreate/">Instrumentation.callActivityOnCreate</a>
+    <h1 class="article-title" itemprop="name">
+      OC-AFN使用
     </h1>
   
 
-    </header>
-  </div>
-</article>
-  
+      </header>
     
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2018/01/18/ActivityThread-scheduleLaunchActivity/" class="archive-article-date">
-  <time datetime="2018-01-18T04:32:47.000Z" itemprop="datePublished">Jan 18</time>
-</a>
+    <div class="article-entry" itemprop="articleBody">
       
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2018/01/18/ActivityThread-scheduleLaunchActivity/">ActivityThread-scheduleLaunchActivity </a>
-    </h1>
-  
+        <pre><code>//GET方式获取百度主页内容
+NSString *url = [NSString stringWithFormat:@&quot;http://www.baidu.com&quot;];
+AFHTTPSessionManager *manager = [AFHTTPSessionManager manager];
+manager.responseSerializer = [AFHTTPResponseSerializer serializer];
 
-    </header>
+[manager.responseSerializer setAcceptableContentTypes:[NSSet setWithObjects:@&quot;text/html&quot;, nil]];
+[manager GET:url parameters:nil progress:nil success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
+
+    NSString *result = [[NSString alloc]initWithData:responseObject encoding:NSUTF8StringEncoding];
+    NSLog(@&quot;%@&quot;,result);
+} failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
+    NSLog(@&quot;%@&quot;,[error localizedDescription]);
+}];
+</code></pre>
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2018/01/25/OC-AFN使用/" data-id="cjcubibt6000ngjs65ze1qy61" class="article-share-link">Compartir</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/AFNetworking/">AFNetworking</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/OC/">OC</a></li></ul>
+
+    </footer>
   </div>
-</article>
+  
+    
+<nav id="article-nav">
   
   
-    </div></section>
+    <a href="/2018/01/25/OC-MBProgressHUD使用/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Viejo</strong>
+      <div class="article-nav-title">OC-MBProgressHUD使用</div>
+    </a>
   
+</nav>
 
+  
+</article>
 
 </section>
         
